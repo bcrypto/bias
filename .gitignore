@@ -17,6 +17,6 @@
 *.backup
 
 # Specific files
-support
+_docs
 spec/*.pdf
 clear.cmd
