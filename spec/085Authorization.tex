@@ -1,0 +1,281 @@
+\section{Узел~Authorization}\label{OIDC.Authorization}
+
+Узел Authorization обрабатывает запросы авторизации~/ аутентификации. 
+%
+К узлу обращается КП пользователя по направлению ПС.
+%
+При обработке запроса СИ проводит аутентификацию пользователя, получает 
+согласие пользователя на доступ ПС к его ресурсам, возможно выпускает код 
+авторизации, перенаправляет пользователя к ПС. 
+
+Адрес узла должен быть зафиксирован в документах инфраструктуры
+или адрес должен быть сообщен ПС во время регистрации в инфраструктуре.
+%
+Адрес не должен содержать компонент \lstinline{fragment}.
+
+Запрос на узел и соответствующие ответы описаны в 
+таблице~\ref{Table.OIDC.Authorization}.
+%
+Запрос и ответы могут включать параметры, дополнительные к перечисленным в 
+таблице. 
+
+Узел должен поддерживать HTTP-метод GET и может поддерживать метод POST. 
+%
+При использовании GET запрос должен кодироваться по схеме Query,
+при использовании POST~--- по схеме Form.
+%
+Нераспознанные параметры запроса и параметры без значений должны 
+игнорироваться.
+%
+Параметры не должны повторяться.
+
+Ответ узла должен кодироваться по схеме Query или Fragment с перенаправлением 
+на узел Redirection. 
+%
+Схема кодирования Query должна применяться только в коммуникационной схеме Code.
+%
+Для перенаправления в ответе должен указываться код 302 HTTP.
+
+\begin{table}[p]
+\caption{Узел Authorization: запрос и ответы}
+\label{Table.OIDC.Authorization} 
+\begin{tabular}{|l|c|p{9.0cm}|l|}
+\hline
+\multirow{2}{*}{Параметр} & Вклю- & \multirow{2}{*}{Описание} & \multirow{2}{*}{Ссылка}\\
+                          & чение &&\\
+\hline
+\hline
+\multicolumn{4}{|c|}{Запрос (GET/Query или POST/Form)}\\
+\hline
+\hline
+%
+\lstinline!scope! & $+$ & 
+Запрашиваемая область действия & 
+\ref{PARAMS.Scope}\\
+\hline
+%
+\lstinline!response_type! & $+$ & 
+Тип ответа & 
+\ref{PARAMS.RespType}\\
+\hline
+%
+\lstinline!client_id! & $+$ & 
+Идентификатор ПС & 
+\ref{PARAMS.ClientId}\\
+\hline
+%
+\lstinline!redirect_uri! & $+$ &
+Адрес перенаправления ответа & 
+\ref{PARAMS.RedirectUri}\\
+\hline
+%
+\lstinline!state! & р & 
+Данные для перенаправления & 
+\ref{PARAMS.State}\\
+\hline
+%
+\lstinline!response_mode! & о & 
+Механизм возвращения ответа &
+\ref{PARAMS.RespMode}\\
+\hline
+%
+\lstinline!nonce! & у & 
+Волатильные данные для переноса в БА &
+\ref{PARAMS.Nonce}\\
+\hline
+%
+\lstinline!display! & о & 
+Тип интерфейса пользователя &
+\ref{PARAMS.Display}\\
+\hline
+%
+\lstinline!prompt! & о & 
+Перечень приглашений пользователю &
+\ref{PARAMS.Prompt}\\
+\hline
+%
+\lstinline!max_age! & о & 
+Срок действия утверждений аутентификации &  
+\ref{PARAMS.MaxAge}\\
+\hline
+%
+\lstinline!ui_locales! & о &
+Предпочтительные языки интерфейса пользователя & 
+\ref{PARAMS.UiLocales}\\
+\hline
+%
+\lstinline!id_token_hint! & o & 
+Ранее выпущенный БА & 
+\ref{PARAMS.IdTokenHint}\\
+\hline
+%
+\lstinline!login_hint! & o &
+Подсказка об идентификаторе пользователя & 
+\ref{PARAMS.LoginHint}\\
+\hline
+%
+\lstinline!acr_values! & o & 
+Предпочтительные уровни гарантий аутентификации & 
+\ref{PARAMS.AcrValues}\\
+\hline
+%
+\lstinline!claims! & o & 
+Перечень утверждений для включения в БА & 
+\ref{PARAMS.Claims}\\
+\hline
+%
+\lstinline!claims_locales! & o & 
+Предпочтительные языки утверждений & 
+\ref{PARAMS.ClaimsLocales}\\
+\hline
+%
+\lstinline!request! & o & 
+Защищенный запрос в виде объекта JWT & 
+\ref{PARAMS.Request}\\
+\hline
+%
+\lstinline!request_uri! & o & 
+Ссылка на защищенный запрос & 
+\ref{PARAMS.RequestUri}\\
+\hline
+%
+\hline
+\multicolumn{4}{|c|}{Успешный ответ в схеме Code (Query)}\\ 
+\hline
+\hline
+%
+\lstinline!code! & $+$ & 
+Код авторизации & 
+\ref{PARAMS.Code}\\
+\hline
+%
+\lstinline!state! & у & 
+Копия параметра \lstinline!state! запроса &  
+\ref{PARAMS.State}\\
+\hline
+%
+\hline
+\multicolumn{4}{|c|}{Успешный ответ в схеме Implicit (Fragment)}\\
+\hline
+\hline
+%
+\lstinline!access_token! & у & 
+БД & 
+\ref{PARAMS.AccessToken}\\
+\hline
+%
+\lstinline!token_type! & у & 
+Тип БД &
+\ref{PARAMS.TokenType}\\
+\hline
+%
+\lstinline!expires_in! & p & 
+Срок действия БД &
+\ref{PARAMS.ExpiresIn}\\
+\hline
+%
+\lstinline!id_token! & $+$ & 
+БА &
+\ref{PARAMS.IdToken}\\
+\hline
+%
+\lstinline!scope! & у & 
+Разрешенная область действия & 
+\ref{PARAMS.Scope}\\
+\hline
+%
+\lstinline!state! & у & 
+Копия параметра \lstinline!state! запроса &  
+\ref{PARAMS.State}\\
+\hline
+%
+\hline
+\multicolumn{4}{|c|}{Успешный ответ в схеме Hybrid (Fragment)}\\
+\hline
+\hline
+%
+\lstinline!code! & $+$ & 
+Код авторизации & 
+\ref{PARAMS.Code}\\
+\hline
+%
+\lstinline!access_token! & у & 
+БД & 
+\ref{PARAMS.AccessToken}\\
+\hline
+%
+\lstinline!token_type! & у & 
+Тип БД &
+\ref{PARAMS.TokenType}\\
+\hline
+%
+\lstinline!expires_in! & р & 
+Срок действия БД &
+\ref{PARAMS.ExpiresIn}\\
+\hline
+%
+\lstinline!id_token! & у & 
+БА &
+\ref{PARAMS.IdToken}\\
+\hline
+%
+\lstinline!scope! & у & 
+Разрешенная область действия & 
+\ref{PARAMS.Scope}\\
+\hline
+%
+\lstinline!state! & у & 
+Копия параметра \lstinline!state! запроса &  
+\ref{PARAMS.State}\\
+\hline
+%
+\hline
+\multicolumn{4}{|c|}{Ответ об ошибке (Query или Fragment)}\\
+\hline
+\hline
+%
+\lstinline!error! & $+$ & 
+Код ошибки & 
+\ref{PARAMS.Error}\\
+\hline
+%
+\lstinline!error_description! & о & 
+Описание ошибки &
+\ref{PARAMS.ErrorDescr}\\
+\hline
+%
+\lstinline!error_uri! & о & 
+Адрес веб-страницы с информацией об ошибке &
+\ref{PARAMS.ErrorUri}\\
+\hline
+%
+\lstinline!state! & у & 
+Копия параметра \lstinline!state! запроса &  
+\ref{PARAMS.State}\\
+\hline
+\end{tabular}
+\end{table}
+
+В параметре \lstinline{response_type} запроса на узел
+задается коммуникационная схема, которую требуется использовать.
+%
+Возможные значения параметра и соответствующие им коммуникационные схемы 
+представлены в таблице~\ref{Table.OIDC.RespType}.
+
+\begin{table}[hbt]
+\caption{Выбор коммуникационной схемы}\label{Table.OIDC.RespType}
+\begin{tabular}{|l|l|}
+\hline
+Значение параметра \lstinline!response_type! & Схема\\
+\hline
+\hline
+\lstinline!"code"! & Code\\
+\lstinline!"id_token"! & Implicit\\
+\lstinline!"id_token token"! & Implicit\\
+\lstinline!"code id_token"! & Hybrid\\
+\lstinline!"code token"! & Hybrid\\
+\lstinline!"code id_token token"! & Hybrid\\
+\hline
+\end{tabular}
+\end{table}
+

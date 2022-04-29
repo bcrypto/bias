@@ -1,0 +1,1095 @@
+\hiddensection{Параметры}\label{PARAMS}
+
+\subsection{Общие сведения}\label{PARAMS.Syntax}
+
+В настоящем подразделе перечисляются параметры запросов и ответов OIDC, 
+устанавливаются правила формирования, передачи и обработки параметров, 
+определяются форматы параметров.
+%
+Параметры перечисляются в алфавитном порядке.
+
+При определении форматов параметров используется синтаксис ABNF (Augmented 
+Backus-Naur Form), установленный~\cite{RFC5234}. 
+%
+Применяются следующие определения ABNF, дополнительные к введенным~\cite{RFC5234}:
+\begin{lstlisting}
+VSCHAR = %x20-7E
+NQCHAR = %x21 / %x23-5B / %x5D-7E
+NQSCHAR = %x20-21 / %x23-5B / %x5D-7E
+UNICODECHARNOCRLF = %x09 / %x20-7E / %x80-D7FF / %xE000-FFFD 
+    / %x10000-10FFFF
+base64url-char = ALPHA / DIGIT / "_" / "-"
+base64url = *base64url-char
+jws = base64url 2( "." base64url )
+    ; header.payload.signature
+jwe = base64url 4( "." base64url )
+    ; header.encrypted-key.iv.ciphertext.tag
+jwt = jws / jwt
+\end{lstlisting}
+
+Дополнительно используется определение \lstinline{URI-reference}, 
+установленное в~\cite{RFC3986}.
+
+% VSCHAR = all printable ASCII characters
+% NQCHAR = VSCHAR без " ", """, "\"
+% NQSCHAR = VSCHAR без """, "\"
+% UNICODECHARNOCRLF definition is based upon the Char definition
+%   in Section 2.2 of [W3C.REC-xml-20081126], but omitting the Carriage
+%   Return and Linefeed characters.
+% rfc5802:
+%   base64-char     = ALPHA / DIGIT / "/" / "+"
+%   base64-4        = 4base64-char
+%   base64-3        = 3base64-char "="
+%   base64-2        = 2base64-char "=="
+%   base64          = *base64-4 [base64-3 / base64-2]
+% Base64url Encoding
+%   Base64 encoding using the URL- and filename-safe character set
+%   defined in Section 5 of RFC 4648 [RFC4648], with all trailing '='
+%   characters omitted (as permitted by Section 3.2) and without the
+%   inclusion of any line breaks, whitespace, or other additional
+%   characters.  Note that the base64url encoding of the empty octet
+%   sequence is the empty string.  (See Appendix C for notes on
+%   implementing base64url encoding without padding.)
+% In the JWS Compact Serialization, a JWS is represented as the
+% concatenation:
+%   BASE64URL(UTF8(JWS Protected Header)) || '.' ||
+%   BASE64URL(JWS Payload) || '.' ||
+%   BASE64URL(JWS Signature)
+% In the JWE Compact Serialization, a JWE is represented as the
+% concatenation:
+%   BASE64URL(UTF8(JWE Protected Header)) || '.' ||
+%   BASE64URL(JWE Encrypted Key) || '.' ||
+%   BASE64URL(JWE Initialization Vector) || '.' ||
+%   BASE64URL(JWE Ciphertext) || '.' ||
+%   BASE64URL(JWE Authentication Tag)
+
+Параметрами ответа с узла UserInfo являются утверждения \lstinline{sub}, 
+\lstinline{iss}, \lstinline{aud}. Они описываются в~\ref{CLAIMS.Auth}.
+
+\subsection{Параметр \lstinline{access_token}}\label{PARAMS.AccessToken}
+
+Параметр \lstinline{access_token} содержит БД, выпущенный СИ.
+
+Параметр \lstinline{access_token} возвращается в ответах с узлов Authorization и 
+Token, передается в запросах на узел UserInfo и другие узлы ресурсов.
+%
+Параметр должен включаться в успешный ответ с узла 
+Authorization, если и только если параметр \lstinline{response_type} запроса 
+на узел содержит строку \lstinline{"token"} 
+(см. таблицу~\ref{Table.OIDC.RespType}).
+
+БД должен содержать не менее 128 битов энтропии.
+
+Формат параметра:
+\begin{lstlisting}
+access-token = 22*VSCHAR
+\end{lstlisting}
+
+%todo: https://stackoverflow.com/questions/50031993/what-characters-are-allowed-in-an-oauth2-access-token
+
+\subsection{Параметр \lstinline{acr_values}}\label{PARAMS.AcrValues} 
+
+Параметр \lstinline{acr_values} содержит перечень предпочтительных
+уровней гарантий аутентификации пользователя. Уровни кодируются лексемами, 
+разделяемыми пробелами. Уровни перечисляются в порядке убывания предпочтения.
+
+Параметр \lstinline{acr_values} указывается в запросе на узел Authorization.
+
+СИ должен учитывать указанные в \lstinline{acr_values} предпочтения при выборе 
+методов аутентификации пользователя.
+% 
+СИ может указать выбранный уровень в утверждении \lstinline{acr} БА 
+(см. \ref{CLAIMS.Acr}).
+%
+% OIDC: The acr Claim is requested as a Voluntary Claim by this parameter.
+
+\begin{note*}
+Предпочительные уровни гарантий аутентификации могут запрашиваться также через 
+параметр \lstinline{claims} (см. \ref{PARAMS.Claims}, \ref{CLAIMS.ReqAcr}).
+\end{note*}
+
+Формат параметра:
+\begin{lstlisting}
+acr-values = 1*VSCHAR
+\end{lstlisting}
+
+Базовый уровень гарантий рекомендуется кодировать строкой \lstinline{"1"},
+средний~--- строкой \lstinline{"2"}, высокий~--- \lstinline{"3"}.
+%
+Могут вводиться подуровни: \lstinline{"11"} (1-й подуровень базового уровня), 
+\lstinline{"12"} (2-й подуровень) и т.д.
+
+\subsection{Параметр \lstinline{claims}}\label{PARAMS.Claims} 
+
+Параметр \lstinline{claims} содержит перечень утверждений,
+которые требуется включить в БА и/или ответы с узлов ресурсов.
+%
+Перечень представляет собой объект JSON, в котором указываются 
+имена утверждений, их ожидаемые значения (например, идентификатор пользователя) 
+и атрибуты (например, признак обязательности включения в билет).
+%
+Правила формирования перечня определены в~\ref{CLAIMS.ReqWith}.
+
+Параметр \lstinline{claims} указывается в запросе на узел Authorization.
+
+Формат параметра:
+\begin{lstlisting}
+claims = 1*VSCHAR
+\end{lstlisting}
+
+\subsection{Параметр \lstinline{claims_locales}}\label{PARAMS.ClaimsLocales} 
+
+Параметр \lstinline{claims_locales} содержит перечень предпочтительных 
+языков утверждений.
+%
+Перечень состоит из тегов, формируемых по правилам~\cite{RFC5646}. 
+%
+Тег кодирует язык, а также возможно алфавит (кириллица или латиница), 
+региональные особенности, диалект и пр. 
+%
+Теги разделяются пробелами и перечисляются в порядке убывания предпочтения.
+
+Параметр \lstinline{claims_locales} указывается в запросе на узел Authorization.
+
+СИ и СР должны выбирать язык утверждений с учетом перечисленных в 
+\lstinline{claims_locales} тегов и их очередности. 
+%
+При обработке запроса СИ не следует возвращать ошибку, даже если ни один из 
+запрашиваемых языков не поддерживается.
+
+Формат параметра:
+\begin{lstlisting}
+claims-locales = locales-name *( SP locales-name )
+locales-name = 1*locales-char
+locales-char = "-" / DIGIT / ALPHA
+\end{lstlisting}
+
+\subsection{Параметр \lstinline{client_assertion}}
+\label{PARAMS.ClientAssertion}
+
+Параметр \lstinline{client_assertion} представляет собой объект JWT, 
+который выступает в роли аутентификатора ПС при обращении к СИ.
+%
+Объект содержит волатильные контекстнозависимые данные, которые сопровождаются 
+имитовставкой или подписью ПС. 
+
+Параметр \lstinline{client_assertion} указывается в запросе на узел Token.
+%
+Параметр должен включаться в запрос при использовании методов аутентификации 
+\lstinline{client_secret_jwt} и \lstinline{private_key_jwt}.
+
+Формат параметра:
+\begin{lstlisting}
+client-assertion = jwt
+\end{lstlisting}
+
+Исходными данными передаваемого в \lstinline{client_assertion} объекта JWT 
+являются утверждения. Обязательные утверждения:
+\lstinline{iss}, \lstinline{sub}, \lstinline{aud}, \lstinline{jti}, 
+\lstinline{exp}, 
+необязательное: \lstinline{iat} (см. \ref{CLAIMS.Auth}).
+%
+Могут использоваться другие утверждения. Утверждения, которые СИ не может 
+распознать, должны игнорироваться.
+
+В утверждениях \lstinline{iss} и \lstinline{sub} должен быть указан
+идентификатор ПС, в утверждении \lstinline{aud}~--- идентификатор СИ.
+В качестве идентификатора СИ может выступать адрес узла Token. При обработке 
+объекта СИ должна проверять, что утверждение \lstinline{aud} действительно 
+относится к ней.
+
+В утверждении \lstinline{jti} ПС должна указать уникальный идентификатор 
+объекта JWT. СИ может проверять уникальность, сохраняя предъявляемые объекты 
+вплоть до окончания их действия.
+
+Момент окончания действия должен указываться в утверждении \lstinline{jti}. 
+СИ должен отклонять просроченные объекты (с поправкой на возможную 
+рассинхронизацию). 
+%
+СИ может отклонять объекты, продолжительность действия которых неоправданно 
+велика.
+
+В утверждении \lstinline{iat} ПС может указать момент выпуска объекта. 
+%
+СИ может отклонять объекты, которые начали действовать неоправданно 
+давно.
+
+\subsection{Параметр \lstinline{client_assertion_type}}
+\label{PARAMS.ClientAssertionType} 
+
+Параметр \lstinline{client_assertion_type} описывает метод аутентификации ПС,
+который требует передачи аутентификатора в параметре 
+\lstinline{client_assertion}.
+
+Параметр \lstinline{client_assertion_type} указывается в запросе на узел Token.
+%
+Параметр должен включаться в запрос при использовании методов аутентификации 
+\lstinline{client_secret_jwt} и \lstinline{private_key_jwt}.
+
+Формат параметра:
+\begin{lstlisting}
+client-assertion-type = 1*( "_" / "-" / ":" / DIGIT / ALPHA )
+\end{lstlisting}
+
+При использовании методов аутентификации \lstinline{client_secret_jwt} и 
+\lstinline{private_key_jwt} параметр должен принимать значение 
+\begin{lstlisting}
+"urn:ietf:params:oauth:client-assertion-type:jwt-bearer"
+\end{lstlisting}
+
+\subsection{Параметр \lstinline{client_id}}\label{PARAMS.ClientId}
+
+Параметр \lstinline{client_id} содержит идентификатор ПС. Идентификатор 
+назначает СИ при регистрации ПС. 
+
+Параметр \lstinline{client_id} указывается в запросах на узлы Authorization и 
+Token. 
+%
+Параметр должен включаться в запрос на узел Token, если аутентификация 
+выполняется в момент обращения к узлу и для этого используется  
+метод \lstinline{client_secret_basic} или \lstinline{client_secret_post}.
+
+Формат параметра:
+\begin{lstlisting}
+client-id = *VSCHAR
+\end{lstlisting}
+
+% todo: Пустой client-id?
+
+\subsection{Параметр \lstinline{client_secret}}\label{PARAMS.ClientSecret}
+
+Параметр \lstinline{client_secret} содержит зарегистрированный секрет 
+аутентификации ПС. 
+
+Параметр \lstinline{client_secret} указывается в запросе на узел Token.
+%
+Параметр должен включаться в запрос, если аутентификация 
+выполняется в момент обращения к узлу и для этого используется  
+метод \lstinline{client_secret_basic} или \lstinline{client_secret_post}.
+
+Формат параметра:
+\begin{lstlisting}
+client-secret = 20*VSCHAR
+\end{lstlisting}
+
+\subsection{Параметр \lstinline{code}}\label{PARAMS.Code}
+
+Параметр \lstinline{code} содержит код авторизации, выпущенный СИ
+по результатам обработки запроса авторизации / аутентификации в схеме
+Code или Hybrid.
+
+Параметр \lstinline{code} возвращается в ответе с узла Authorization, 
+передается в запросе на узел Token.
+
+При выпуске кода авторизации СИ должен связать его с идентификатором ПС 
+и адресом перенаправления (параметры \lstinline{client_id} и 
+\lstinline{redirect_uri} запроса на узел Authorization) и учитывать 
+связывание при приеме кода.
+%
+Код авторизации должен содержать не менее 64 битов энтропии.
+%
+Для снижения издержек при компрометации кода срок его действия должен быть 
+небольшим.
+%
+Рекомендуемый срок: не более 10 минут.
+
+ПС должна использовать код авторизации однократно. При повторном получении 
+одного и того же кода СИ не должна его обрабатывать и, более того, СИ следует   
+отменить все билеты, выпущенные ранее на основании этого кода.
+
+Формат параметра:
+\begin{lstlisting}
+code = 10*VSCHAR
+\end{lstlisting}
+
+\subsection{Параметр \lstinline{display}}\label{PARAMS.Display}  
+
+Параметр \lstinline{display} определяет предпочтительный тип интерфейса 
+пользователя во время аутентификации перед СИ и дачи разрешения на доступ к его 
+ресурсам. Интерфейс реализует КП.
+
+Параметр \lstinline{display} указывается в запросе на узел Authorization.
+
+При обработке запроса СИ может определить возможности клиентской программы и 
+самостоятельно выбрать подходящий тип интерфейса.
+
+Формат параметра:
+\begin{lstlisting}
+display = 1*( "_" / DIGIT / ALPHA )
+\end{lstlisting}
+
+Стандартные значения параметра:
+%
+\begin{itemize}
+\item
+\lstinline{"page"}~--- полностраничный режим, значение по умолчанию;
+
+\item
+\lstinline{"popup"}~--- 
+всплывающее окно. Окно должно иметь подходящий размер и не должно 
+закрывать главное окно КП;
+
+\item
+\lstinline{"touch"}~---
+интерфейс сенсорного устройства;
+
+\item
+\lstinline{"wap"}~---
+интерфейс мобильного телефона (не смартфона).
+\end{itemize}
+
+\subsection{Параметр \lstinline{error}}\label{PARAMS.Error}
+
+Параметр \lstinline{error} описывает код ошибки.
+
+Параметр \lstinline{error} включается в ответ об ошибке.
+%
+Параметр следует включать в ответ с узла UserInfo, если ошибка касается 
+технологии OIDC и не может быть описана стандартным кодом ошибки HTTP.
+
+Формат параметра:
+\begin{lstlisting}
+error = 1*NQSCHAR
+\end{lstlisting}
+
+Стандартные коды ошибок:
+\begin{itemize}
+\item
+% OAuth[Auth,Token,UserInfo]
+\lstinline{"invalid_request"}~---
+неверный формат запроса: отсутствует требуемый параметр, некорректное значение
+параметра, параметр встречается более одного раза, другое.
+%
+Код \lstinline{"invalid_request"} должен возвращаться вместе с кодом 400 
+(Bad Request) HTTP;
+
+\item
+% OAuth[Token]
+\lstinline{"invalid_client"}~---
+ошибка аутентификации ПС: неизвестная ПС, аутентификация не выполнялась, 
+неподдерживаемый метод аутентификации, другое.
+%
+Код \lstinline{"invalid_client"} может возвращаться вместе с кодом 401 
+(Unauthorized) HTTP.
+%
+Если секрет аутентификации передавался в заголовке \lstinline{Authorization} 
+HTTP-запроса (например, использовался метод \lstinline{client_secret_basic}),
+то код 401 является обязательным и в HTTP-ответ должен быть включен заголовок 
+\lstinline{WWW-Authenticate} с информацией об использованном методе 
+аутентификации;
+%
+% todo: использованном? ("matching the auth. scheme _used_ by the client")
+
+\item
+% OAuth[Token]
+\lstinline{"invalid_grant"}~---
+код авторизации, аутентификатор пользователя или БО недействителен: 
+некорректен, уже не действуют, отозван, 
+не соответствует адресу перенаправления, выпущен для другой ПС;
+%
+% todo: аутентификатор пользователя vs "resource owner credentials"
+
+\item
+% OAuth[UserInfo]
+\lstinline{"invalid_token"}~--- 
+БД недействителен: некорректен, уже не действует, отозван, другое. 
+%
+Код \lstinline{"invalid_token"} должен возвращаться вместе с кодом 
+401 (Unauthorized) HTTP;
+
+\item
+% OAuth[UserInfo]
+\lstinline{"insufficient_scope"}~---
+область действия БД недостаточна для успешной обработки запроса.
+%
+Код \lstinline{"insufficient_scope"} следует возвращать с кодом 
+403 (Forbidden) HTTP. 
+%
+Код \lstinline{"insufficient_scope"} может сопровождаться
+параметром \lstinline{scope}, в котором должен быть указан требуемая
+область действия;
+
+\item
+% OAuth[Auth,Token]
+\lstinline{"unauthorized_client"}~--- 
+ПС не авторизована на обращение к узлу, запрос кода авторизации или БД;
+
+\item
+% OAuth[Auth]
+\lstinline{"access_denied"}~---
+отказ в обработке запроса со стороны пользователя или СИ;
+
+\item
+% OAuth[Auth]
+\lstinline{"unsupported_response_type"}~---
+СИ не поддерживает заявленное значение параметра \lstinline{response_type}; 
+
+\item
+% OAuth[Token]
+\lstinline{"unsupported_grant_type"}~---
+СИ не поддерживает заявленное значение параметра \lstinline{grant_type};
+
+\item
+% OAuth[Auth,Token]
+\lstinline{"invalid_scope"}~---
+указанное в параметре \lstinline{scope} значение некорректно, не распознано, 
+или выходит за пределы заданной пользователем области действия;
+
+\item
+% OAuth[Auth]
+\lstinline{"server_error"}~---
+СИ столкнулся с непредвиденными обстоятельствами, 
+которые препятствуют обработке запроса;
+
+\item
+% OAuth[Auth]
+\lstinline{"temporarily_unavailable"}~---
+СИ в настоящее время неспособен обработать
+запрос из-за временной перегрузки или технического обслуживания;
+
+\begin{note*}
+Коды \lstinline{"server_error"}, \lstinline{"temporarily_unavailable"} 
+имеют такое же значение, что и коды 500 (Internal Server Error), 
+503 (Service Unavailable) HTTP. Однако коды HTTP не могут быть возвращены  
+ПС через механизм перенаправления.
+\end{note*}
+
+\item
+% OIDC[Auth]
+\lstinline{"interaction_required"}~---
+СИ требует взаимодействия с пользователем в той или иной форме. 
+%
+Код \lstinline{"interaction_required"} может возвращаться тогда, когда параметр 
+\lstinline{prompt} запроса авторизации~/ аутентификации принимает значение 
+\lstinline{"none"}, и при этом запрос не может быть обработан без отображения 
+интерфейса пользователя для взаимодействия с ним; 
+
+\item
+% OIDC[Auth]
+\lstinline{"login_required"}~---
+СИ требует аутентификации пользователя.
+%
+Код~\lstinline{"login_required"} может возвращаться тогда,
+когда параметр \lstinline{prompt} запроса авторизации~/ аутентификации 
+принимает значение \lstinline{"none"}, и при этом запрос не может быть 
+обработан без отображения интерфейса пользователя для его аутентификации; 
+
+\item
+% OIDC[Auth]
+\lstinline{"account_selection_required"}~--- 
+для аутентификации пользователь должен выбрать учетную запись. 
+%
+Пользователь может быть аутентифицирован перед СИ с использованием различных 
+учетных записей, но не выбрана ни одна из них.
+%
+Код~\lstinline{"account_selection_required"} может возвращаться тогда, когда 
+параметр \lstinline{prompt} запроса авторизации~/ аутентификации 
+принимает значение \lstinline{"none"}, и при этом запрос не может быть 
+обработан без отображения интерфейса пользователя для выбора учетной записи;
+
+\item
+% OIDC[Auth]
+\lstinline{"consent_required"}~--- 
+СИ требует подтверждения согласия на доступ к ресурсам пользователя.
+%
+Код~\lstinline{"consent_required"} может возвращаться тогда, когда 
+параметр \lstinline{prompt} запроса авторизации~/ аутентификации 
+принимает значение \lstinline{"none"}, и при этом запрос не 
+может быть обработан без отображения интерфейса пользователя для подтверждения 
+его согласия на доступ к ресурсам; 
+
+% OIDC[Auth]
+\item
+\lstinline{"invalid_request_uri"}~---
+параметр \lstinline{request_uri} в запросе авторизации~/ аутентификации 
+ссылается на некорректный объект JWT или ошибка при обращении  
+по указанному в \lstinline{request_uri} адресу; 
+
+% OIDC[Auth]
+\item
+\lstinline{"invalid_request_object"}~--- 
+параметр \lstinline{request} в запросах авторизации~/ аутентификации содержит 
+некорректный объект JWT; 
+
+% OIDC[Auth]
+\item
+\lstinline{"request_not_supported"}~---
+СИ не поддерживает параметр \lstinline{request} в запросах авторизации~/ 
+аутентификации;
+
+% OIDC[Auth]
+\item
+\lstinline{"request_uri_not_supported"}~---
+СИ не поддерживает параметр \lstinline{request_uri} в запросах 
+авторизации~/ аутентификации.
+\end{itemize}
+
+% todo: OIDC, Section 7
+% OIDC[Auth]
+% \lstinline{"registration_not_supported"}~---
+% СИ не поддерживает параметр \lstinline{registration} в запросах 
+% авторизации~/ аутентификации.
+
+\subsection{Параметр \lstinline{error_description}}\label{PARAMS.ErrorDescr}
+
+Параметр \lstinline{error_description} содержит информацию об ошибке в удобной 
+для восприятия человеком форме.
+
+Параметр \lstinline{error_description} включается в ответ об ошибке.
+
+% todo: error_description без error?
+
+Формат параметра:
+\begin{lstlisting}
+error-description = 1*NQSCHAR
+\end{lstlisting}
+
+\subsection{Параметр \lstinline{error_uri}}\label{PARAMS.ErrorUri}
+
+Параметр \lstinline{error_uri} содержит сетевой адрес (URI) веб-страницы 
+с информацией об ошибке в удобной для восприятия человеком форме.
+
+Параметр \lstinline{error_uri} включается в ответ об ошибке.
+
+% todo: error_uri без error?
+
+Формат параметра:
+\begin{lstlisting}
+error-uri = URI-reference
+\end{lstlisting}
+
+\subsection{Параметр \lstinline{expires_in}}\label{PARAMS.ExpiresIn}
+
+Параметр \lstinline{expires_in} определяет срок действия БД в секундах. 
+%
+Например, значение 300 означает, что БД действует в течении пяти минут с момента 
+формирования ответа.
+
+Параметр \lstinline{expires_in} включается в ответы с узлов Authorization и 
+Token. 
+%
+Параметр рекомендуется включать в ответ, если ответ содержит БД.  
+%
+Если параметр опущен, то СИ должен определить в документации или другим способом
+срок действия БД, используемый по умолчанию.
+
+Формат параметра:
+\begin{lstlisting}
+expires-in = 1*DIGIT
+\end{lstlisting}
+
+\subsection{Параметр \lstinline{grant_type}}\label{PARAMS.GrantType}
+
+Параметр \lstinline{grant_type} определяет тип запроса на узел Token.
+
+Параметр \lstinline{grant_type} включается в запрос на узел Token.
+%
+В запросе на выпуск билетов параметр должен принимать значение 
+\lstinline{"authorization_code"}.
+%
+В запросе на обновление билетов параметр должен принимать значение 
+\lstinline{"refresh_token"}.
+
+Формат параметра:
+\begin{lstlisting}
+grant-type = grant-name / URI-reference
+grant-name = 1*name-char
+name-char = "-" / "." / "_" / DIGIT / ALPHA
+\end{lstlisting}
+
+\subsection{Параметр \lstinline{id_token}}\label{PARAMS.IdToken}
+
+Параметр \lstinline{id_token} содержит БА, выпущенный СИ.
+
+Параметр \lstinline{id_token} возвращается в ответах с узлов Authorization и Token.
+
+Формат параметра: 
+\begin{lstlisting}
+id-token = 1*VSCHAR
+\end{lstlisting}
+
+Содержание и формат БА детализируются в приложении~\ref{IDTOKEN}. 
+
+% todo: возврат БА при обновлении билетов (в ответ на БО)
+
+\subsection{Параметр \lstinline{id_token_hint}}\label{PARAMS.IdTokenHint}
+
+Параметр \lstinline{id_token_hint} содержит БА, ранее выпущенный СИ.
+БА подтверждает, что пользователь был аутентифицирован в одном из предыдущих 
+сеансов со СИ.
+
+Параметр \lstinline{id_token_hint} указывается в запросе на узел Authorization. 
+
+СИ возвращает успешный ответ на запрос, если сеанс с пользователем, указанным в 
+БА, не завершен или если сеанс был открыт в результате обработки запроса. В 
+противном случае СИ следует возвратить ответ об ошибке, например, с кодом 
+\lstinline{"login_required"}.
+
+Если параметр \lstinline{prompt} запроса на узел Authorization 
+принимает значение \lstinline{"none"}, то параметр \lstinline{id_token_hint} 
+следует включать в запрос. 
+%
+Если \lstinline{id_token_hint} все-таки не включен, то СИ может возвратить 
+ошибку.
+%
+Тем не менее, СИ следует давать по возможности успешные ответы даже при 
+отсутствии в запросе \lstinline{id_token_hint}.
+
+БА, переданный через \lstinline{id_token_hint}, может использоваться СИ, 
+даже если идентификатор СИ не указан в утверждении \lstinline{aud} билета 
+(см. \ref{CLAIMS.Aud}).
+
+Если БА, который требуется передать через \lstinline{id_token_hint}, 
+не только подписан, но и конвертован, то ПС перед передачей должна снять защиту 
+с БА, а затем конвертовать билет на открытом ключе СИ.
+
+Формат параметра:
+\begin{lstlisting}
+id-token-hint = 1*VSCHAR
+\end{lstlisting}
+
+\subsection{Параметр \lstinline{login_hint}}\label{PARAMS.LoginHint}
+
+Параметр \lstinline{login_hint} содержит идентификатор, который пользователь 
+предположительно может использовать во время аутентификации перед СИ. 
+%
+Предполагаемый идентификатор может быть известен ПС, если в сеансе с 
+пользователем тот передавал ей свои идентификационные данные.
+%
+Передача предполагаемого идентификатора может упростить СИ поиск учетной записи 
+пользователя.
+
+Параметр \lstinline{login_hint} указывается в запросе на узел Authorization.
+
+Обработка параметра \lstinline{login_hint} остается на усмотрение СИ.
+% todo: It is RECOMMENDED that the hint value match the value used for 
+% discovery. 
+
+Формат параметра:
+\begin{lstlisting}
+login-hint = *UNICODECHARNOCRLF
+\end{lstlisting}
+
+\subsection{Параметр \lstinline{max_age}}\label{PARAMS.MaxAge} 
+
+Параметр \lstinline{max_age} описывает срок действия утверждений
+аутентификации, т.е. максимальный промежуток времени с момента (активной)
+аутентификации пользователя, в течение которого ПС готова полагаться на факт
+аутентификации.
+%
+Срок действия задается в секундах.
+
+Параметр \lstinline{max_age} указывается в запросе на узел Authorization.
+
+Если заданный в \lstinline{max_age} срок действия истек (например, задано 
+нулевое значение), то СИ должна инициировать аутентификацию пользователя.
+
+Если параметр \lstinline{max_age} включен в запрос, то выпускаемый БА должен 
+содержать утверждение \lstinline{auth_time} (см. \ref{CLAIMS.AuthTime}).
+
+Формат параметра:
+\begin{lstlisting}
+max-age = 1*DIGIT
+\end{lstlisting}
+
+\subsection{Параметр \lstinline{nonce}}\label{PARAMS.Nonce} 
+
+Параметр \lstinline{nonce} содержит синхропосылку~--- 
+волатильные данные, предназначенные для противодействия атакам на основе 
+повторов. Синхропосылка повторяется в запросе аутентификации и соответствующем 
+БА, делая их уникальными и связывая друг с другом. 
+
+Параметр \lstinline{nonce} указывается в запросе на узел Authorization.
+%
+Параметр должен включаться в запрос при использовании коммуникационных 
+схем Implicit и Hybrid.
+
+Синхропосылку готовит ПС. Синхропосылка должна содержать не менее 64 битов 
+энтропии.
+
+При обработке запроса СИ должен сохранить синхропосылку, переданную в параметре
+\lstinline{nonce}, а затем перенести ее в выпускаемый БА. Синхропосылка 
+повторяется в утверждении \lstinline{nonce} билета.
+
+Если синхропосылка включена в БА, то при получении билета ПС должна сравнить ее 
+с синхропосылкой, отправленной в запросе.
+
+Формат параметра:
+\begin{lstlisting}
+nonce = 10*VSCHAR
+\end{lstlisting}
+
+\subsection{Параметр \lstinline{prompt}}\label{PARAMS.Prompt}
+
+Параметр \lstinline{prompt} содержит перечень приглашений пользователю для
+организации его повторной аутентификации и получения его согласия на доступ к
+ресурсам. Приглашения кодируются лексемами, разделяемыми пробелами.
+
+Параметр \lstinline{prompt} указывается в запросе на узел Authorization.
+
+ПС может включать параметр в запрос для проверки того, что сеанс пользователя 
+все еще активен или для привлечения внимания пользователя к запросу.
+
+% todo: The prompt parameter can be used by the Client to make sure that the 
+% End-User is still present for the current session or to bring attention to 
+% the request.  
+
+Формат параметра:
+\begin{lstlisting}
+prompt = prompt-name *( SP prompt-name )
+prompt-name = 1*prompt-char
+prompt-char = "_" / DIGIT / ALPHA
+\end{lstlisting}
+
+Предусмотрены следующие приглашения:
+%
+\begin{itemize}
+\item
+\lstinline{"none"}~--- 
+СИ не должна отображать элементы интерфейса пользователя и, таким образом, 
+приглашение фактически отсутствует, являясь техническим.
+%
+Если пользователь еще не аутентифицирован или ПС не имеет предварительного
+согласия на доступ к ресурсам пользователя или не выполнены какие-либо другие 
+условия, то должна быть возвращена ошибка, например, с кодом 
+\lstinline{"login_required"} или \lstinline{"interaction_required"}.
+%
+Приглашение \lstinline{"none"} может использоваться для проверки того, 
+аутентифицирован пользователь или нет;
+
+% todo: "or does not fulfill other conditions for processing the request"?
+ 
+\item
+\lstinline{"login"}~--- 
+СИ следует предложить пользователю пройти повторную аутентификацию.
+%
+Если СИ не может повторно аутентифицировать пользователя, то должна быть 
+возвращена ошибка, например, с кодом \lstinline{"login_required"};
+
+\item
+\lstinline{"consent"}~--- 
+СИ следует предложить пользователю подтвердить согласие на доступ ПС к его 
+ресурсам. 
+%
+Если СИ не может получить подтверждение, то должна быть возвращена
+ошибка, например, с кодом \lstinline{"consent_required"};
+
+\item
+\lstinline{"select_account"}~--- 
+СИ следует предложить пользователю выбрать учетную запись.
+%
+Предложение оказывается полезным, если у пользователя имеется несколько учетных 
+записей и нужно определить подходящую для текущего сеанса.
+%
+Если СИ не может получить информацию о сделанном пользователем выборе 
+учетной записи, то должна быть возвращена ошибка, например, с кодом
+\lstinline{"account_selection_required"}.
+\end{itemize}
+
+Приглашение \lstinline{"none"} не должно включаться в \lstinline{prompt} с 
+какими-либо другими приглашениями. 
+
+Если параметр \lstinline{scope} запроса на узел Authorization включает значение
+\lstinline{"offline_access"}, то после обработки запроса ПС может иметь
+доступ к ресурсам пользователя, даже если тот не активен (офлайн).
+%
+Такой запрос должен содержать параметр \lstinline{prompt} со значением 
+\lstinline{"consent"}, которое обязует СИ запросить разрешение пользователя 
+на доступ к его ресурсам. 
+%
+Разрешение должно запрашиваться всякий раз при передаче \lstinline{scope}
+со значением \lstinline{"offline_access"}, предыдущие разрешения могут 
+оказаться недостаточными.
+%
+Исключением из этого правила являются ситуации, когда пользователь дает 
+разрешение на доступ другим способом, например, во время регистрации.
+
+\subsection{Параметр \lstinline{redirect_uri}}\label{PARAMS.RedirectUri}
+
+Параметр \lstinline{redirect_uri} содержит адрес узла Redirection.
+Адрес используется при перенаправлении ПС ответов СИ через КП пользователя.
+
+Параметр \lstinline{redirect_uri} указывается в запросах на узлы Authorization 
+и Token.
+
+ПС должен указать в запросе на узел Authorization один из адресов перенаправления, 
+согласованных со СИ во время регистрации. СИ должен проверить, что передан 
+зарегистрированный адрес. Адреса должны сравниваться как строки, посимвольно.
+
+ПС должен указать в запросе на узел Token тот же адрес, что был передан ранее 
+в запросе на узел Authorization. СИ должен проверить совпадение адресов.
+
+Формат параметра:
+\begin{lstlisting}
+redirect-uri = URI-reference
+\end{lstlisting}
+
+% todo: When using this [Code] flow, the Redirection URI SHOULD use the https 
+% scheme; however, it MAY use the http scheme, provided that the Client Type is 
+% confidential, as defined in Section 2.1 of OAuth 2.0, and provided the OP 
+% allows the use of http Redirection URIs in this case. The Redirection URI MAY 
+% use an alternate scheme, such as one that is intended to identify a callback 
+% into a native application. 
+
+% todo: When using this [Implicit, Hybrid] flow, the Redirection URI MUST NOT 
+% use the http scheme unless the Client is a native application, in which case 
+% it MAY use the http: scheme with localhost as the hostname.
+
+\subsection{Параметр \lstinline{refresh_token}}\label{PARAMS.RefreshToken} 
+
+Параметр \lstinline{refresh_token} содержит БО, выпущенный СИ.
+БО используется при обновлении билетов, в том числе самого БО.
+
+Параметр \lstinline{refresh_token} возвращается в ответе с узла Token и 
+передается в запросе на этот узел.
+%
+БО должен включаться в успешный ответ, если параметр \lstinline{scope} 
+запроса авторизации~/ аутентификации содержит значение 
+\lstinline{"offline_access"}. 
+
+БО должен содержать не менее 128 битов энтропии.
+
+При обновлении БО область действия, заданная параметром \lstinline{scope}, 
+должна сохраняться.
+%
+Получив обновленный БО, ПС должна использовать его вместо текущего.
+
+Формат параметра:
+\begin{lstlisting}
+refresh-token = 22*VSCHAR
+\end{lstlisting}
+
+\subsection{Параметр \lstinline{request}}\label{PARAMS.Request} 
+
+Параметр \lstinline{request} содержит объект JWT, в котором в качестве утверждений
+представлены параметры запроса. Объект можно подписывать и (или) 
+конвертовать и, таким образом, организовать защиту параметров запроса.
+
+Параметр \lstinline{request} указывается в запросе на узел Authorization.
+
+Параметры \lstinline{request} и \lstinline{request_uri} не должны включаться в 
+запрос одновременно. 
+%
+Объект JWT, передаваемый в \lstinline{request}, не должен включать 
+параметры \lstinline{request} и \lstinline{request_uri}.
+
+В объекте JWT следует передавать долгосрочные параметры (которые могут быть 
+предварительно подписаны), в том время как волатильные параметры (например,
+\lstinline{nonce} или \lstinline{state}) следует передавать обычным образом. 
+%
+Параметры объекта JWT имеют приоритет перед параметрами, переданными обычным 
+образом.
+
+Параметры \lstinline{response_type} и \lstinline{client_id} должны передаваться 
+обычным образом. При включении параметров в объект JWT их значения должны быть 
+повторяться.
+
+Параметр \lstinline{scope} также должен передаваться обычным образом и при 
+этом содержать строку \lstinline{"openid"}, которая указывает на использование 
+технологии OIDC.
+
+Если объект JWT подписывается, то в него следует включать утверждения 
+\lstinline{iss} и \lstinline{aud} (см.~\ref{CLAIMS.Iss}, \ref{CLAIMS.Aud}).
+%
+В утверждении \lstinline{iss} следует указать идентификатор ПС или другой 
+стороны, подписавшей объект.
+%
+В утверждении \lstinline{aud} следует указать идентификатор СИ.
+
+Объект JWT может не только подписываться, но и конвертоваться на открытом ключе 
+СИ после подписания или конвертоваться без подписания. Конвертование перед 
+подписанием запрещено.
+
+Формат параметра:
+\begin{lstlisting}
+request = jwt
+\end{lstlisting}
+
+\subsection{Параметр \lstinline{request_uri}}\label{PARAMS.RequestUri} 
+
+Параметр \lstinline{request_uri} содержит сетевой адрес объекта JWT с параметрами 
+запроса. Содержание объекта и правила работы с ним определены при описании
+параметра \lstinline{request}. Отличие только в том, что в \lstinline{request}
+объект передается по значению, а в \lstinline{request_uri}~--- по ссылке.
+%
+Передача по ссылке может быть удобнее, если объект имеет большойц размер.
+
+Параметр \lstinline{request_uri} указывается в запросе на узел Authorization.
+
+Параметры \lstinline{request} и \lstinline{request_uri} не должны включаться в 
+запрос одновременно. 
+
+Формат параметра:
+\begin{lstlisting}
+request_uri = URI-reference
+\end{lstlisting}
+
+Если объект JWT не подписан или если подпись не может проверена СИ, 
+то в адресе объекта JWT должна использоваться схема \lstinline{https}.
+%
+СИ должна иметь доступ к объекту по указанному адресу.
+%
+Следует также предусмотреть доступ ПС.
+
+\subsection{Параметр \lstinline{response_mode}}\label{PARAMS.RespMode} 
+
+Параметр \lstinline{response_mode} содержит предпочтительный режим ответа СИ на 
+запрос авторизации~/ аутентификации.
+
+Параметр \lstinline{response_mode} указывается в запросе на узел Authorization.
+
+Параметр не рекомендуется использовать в тех случаях, когда запрашиваемый 
+режим ответа является режимом по умолчанию в соответствии с типом, переданным
+в \lstinline{response_type}. 
+%
+% todo: This use of this parameter is NOT RECOMMENDED when the Response Mode 
+% that would be requested is the default mode specified for the Response Type.
+
+Формат параметра:
+\begin{lstlisting}
+response-mode = 1*( "_" / DIGIT / ALPHA )
+\end{lstlisting}
+
+Предусмотрены следующие режимы ответа:
+%
+\begin{itemize}
+\item
+\lstinline{"query"}~--- 
+параметры ответа кодируются по схеме Query (см. \ref{OIDC.Prelim});
+
+\item
+\lstinline{"fragment"}~--- 
+параметры ответа кодируются по схеме Fragment.
+\end{itemize}
+
+\subsection{Параметр \lstinline{response_type}}\label{PARAMS.RespType}
+
+Параметр \lstinline{response_type} определяет тип ответа на запрос 
+авторизации~/ аутентификации и неявно задает коммуникационную схему, которая 
+будет использоваться. 
+
+Параметр \lstinline{response_mode} указывается в запросе на узел Authorization.
+
+Формат параметра:
+\begin{lstlisting}
+response-type = response-name *( SP response-name )
+response-name = 1*response-char
+response-char = "_" / DIGIT / ALPHA
+\end{lstlisting}
+
+Допустимые значения параметра определены в таблице~\ref{Table.OIDC.RespType}.
+
+\subsection{Параметр \lstinline{scope}}\label{PARAMS.Scope}
+
+Параметр \lstinline{scope} определяет область действия запроса авторизации,
+в том числе используемую технологию (OIDC), перечень выпускаемых билетов,
+права доступа к ресурсам пользователей. Область кодируется лексемами, 
+разделяемыми пробелами. С увеличением числа лексем область становится шире.
+
+Параметр \lstinline{scope} указывается в запросах на узлы Authorization и 
+Token, возвращается в ответах с узлов Authorization, Token и UserInfo.
+%
+В запросах параметр определяет запрашиваемую область действия, в успешных 
+ответах~--- разрешенную (согласованную) область действия, в ответах об ошибке 
+(с узла UserInfo)~--- область действия, которая требуется для получения 
+доступа. 
+
+Параметр \lstinline{scope} должен включаться в успешный ответ, если 
+согласованная область действия отличается от запрошенной. Если области 
+совпадают, то включение не обязательно.
+
+Область действия в запросе на обновление билетов не должна быть шире, чем 
+область действия в запросе авторизации~/ аутентификации. Наоборот, область
+может сужаться. 
+%
+Если область действия не указывается в запросе на обновление билетов,
+то СИ должен полагать, что повторяется область соответствующего запроса
+авторизации~/ аутентификации.
+
+Формат параметра:
+\begin{lstlisting}
+scope = scope-token *( SP scope-token )
+scope-token = 1*NQCHAR
+\end{lstlisting}
+
+Область действия должна содержать лексему \lstinline{"openid"},
+указывающее на использование технологии OIDC. 
+
+Область действия может включать лексему \lstinline{"offline_access"}, 
+если от СИ требуется возврат БО. 
+
+Область действия может содержать дополнительные лексемы, которые 
+определяюn запрашиваемые ПС в виде утверждений ресурсы пользователя
+(см.~\ref{CLAIMS.ReqWithScope}). 
+
+Лексемы \lstinline{scope}, которые не могут быть распознаны, должны 
+игнорироваться.
+
+\subsection{Параметр \lstinline{state}}\label{PARAMS.State} 
+
+Параметр \lstinline{state} содержит состояние ПС~--- волатильные данные, 
+связывающие запросы авторизации~/ аутентификации с соответствующими ответами. 
+%
+Связывание блокирует атаки типа CSRF (см.~\ref{ATK.TM}).
+
+Параметр \lstinline{state} указывается в запросе на узел Authorization и 
+возвращается в соответствующих ответах.
+%
+Состояние должно включаться в ответ (успешный и об ошибке), если оно указано в 
+запросе. 
+
+Состояние из запроса должно повторяться в ответе. При получении ответа ПС 
+должен проверять данный факт.
+
+Формат параметра:
+\begin{lstlisting}
+state = 1*VSCHAR
+\end{lstlisting}
+
+% https://developers.google.com/identity/protocols/oauth2/openid-connect?hl=en#createxsrftoken
+% https://stackoverflow.com/questions/26132066/what-is-the-purpose-of-the-state-parameter-in-oauth-authorization-request
+	
+\subsection{Параметр \lstinline{token_type}}\label{PARAMS.TokenType} 
+
+Параметр \lstinline{token_type} определяет тип БД, выпущенного СИ.
+
+Параметр \lstinline{token_type} указывает в ответе с узла Token.
+%
+Параметр должен включаться в ответ, если ответ содержит параметр 
+\lstinline{access_token}. 
+
+Формат параметра:
+\begin{lstlisting}
+token-type = type-name / URI-reference
+type-name = 1*name-char
+name-char = "-" / "." / "_" / DIGIT / ALPHA
+\end{lstlisting}
+
+Параметр должен принимать значение~\lstinline{"Bearer"}. 
+%
+Использование других типов БД выходит за пределы настоящего стандарта. 
+
+\subsection{Параметр \lstinline{ui_locales}}\label{PARAMS.UiLocales}
+
+Параметр \lstinline{ui_locales} содержит перечень предпочтительных 
+языков интерфейса пользователя.
+%
+Перечень состоит из тегов, формируемых по правилам~\cite{RFC5646}. 
+%
+Теги разделяются пробелами и перечисляются в порядке убывания предпочтения.
+
+Параметр \lstinline{ui_locales} указывается в запросе на узел Authorization.
+
+СИ должна выбирать язык утверждений с учетом перечисленных в 
+\lstinline{ui_locales} тегов и их очередности. 
+%
+При обработке запроса СИ не следует возвращать ошибку, даже если ни один из 
+запрашиваемых языков не поддерживается.
+
+Формат параметра:
+\begin{lstlisting}
+ui-locales = locales-name *( SP locales-name )
+locales-name = 1*locales-char
+locales-char = "-" / DIGIT / ALPHA
+\end{lstlisting}
+

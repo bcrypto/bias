@@ -1,0 +1,305 @@
+\section{Узел Token}\label{OIDC.Token}
+
+Узел Token обрабатывает запросы на выпуск и обновление билетов.
+%
+Узел используется в схемах~Code и Hybrid. 
+% 
+К узлу обращается ПС, предъявляя ранее полученные секретные данные:
+код авторизации или БО.
+%
+СИ проверяет представленные данные и, в случае успеха, выпускает БД, 
+возможно БА, возможно БО.
+
+Запрос на выпуск билета включает код авторизации, полученный КП от узла 
+Authorization и перенаправленный ПС на узел Redirection. 
+%
+Запрос на обновление включает БО, полученный ранее от узла Token в результате 
+обработки запроса на выпуск или предыдущего запроса на обновление.
+%
+Тип запроса указывается в его параметре \lstinline{grant_type}.
+
+Адрес узла должен быть зафиксирован в документах инфраструктуры
+или адрес должен быть сообщен ПС во время регистрации в инфраструктуре.
+%
+Адрес не должен содержать компонент \lstinline{fragment}.
+
+Перед обращением к узлу ПС должна пройти аутентификацию перед СИ. 
+Аутентификация может проводиться или завершаться в момент обращения,
+и тогда запрос ПС должен содержать аутентификационные данные. 
+%
+Перечень методов аутентификации должен быть согласован со СИ при 
+регистрации ПС и связан с идентификатором ПС.
+
+Запросы на узел и соответствующие ответы описаны в 
+таблице~\ref{Table.OIDC.Token}. 
+%
+Запросы и ответы могут включать параметры, дополнительные к перечисленным в 
+таблице.
+
+ПС должна обращаться к узлу используя HTTP-метод POST.
+%
+Запрос должен кодироваться по схеме Form.
+%
+Нераспознанные параметры запроса и параметры без значений должны 
+игнорироваться.
+%
+Параметры не должны повторяться.
+
+Ответ узла должен кодироваться по схеме JSON. 
+%
+Если ответ содержит БД, БО или другие критические данные, то соответствующий 
+пакет HTTP должен включать заголовок \lstinline{Cache-Control} со значением
+\lstinline{"no-store"} и заголовок \lstinline{Pragma} со значением 
+\lstinline{"no-cache"}.
+
+\begin{table}[H]
+\caption{Узел Token: запросы и ответы}\label{Table.OIDC.Token}  
+\begin{tabular}{|l|c|p{8.1cm}|l|}
+\hline
+\multirow{2}{*}{Параметр} & Вклю- & \multirow{2}{*}{Описание} & \multirow{2}{*}{Ссылка}\\
+                          & чение &&\\
+\hline
+\hline
+\multicolumn{4}{|c|}{Запрос на выпуск билетов (POST/Form)}\\
+\hline
+\hline
+%
+\lstinline!grant_type! & + & 
+Значение \lstinline!"authorization_code"! & 
+\ref{PARAMS.GrantType}\\
+\hline
+%
+\lstinline!code! & + & 
+Код авторизации & 
+\ref{PARAMS.Code}\\
+\hline
+%
+\lstinline!redirect_uri! & + & 
+Копия одноименного параметра запроса на узел Authorization & 
+\ref{PARAMS.RedirectUri}\\
+\hline
+%	
+\lstinline!client_id! & у & 
+Идентификатор ПС & 
+\ref{PARAMS.ClientId}\\
+\hline
+%	
+\lstinline!client_secret! & у & 
+Секрет аутентификации ПС$\mbox{}^*$ & 
+\ref{PARAMS.ClientSecret}\\
+\hline
+%
+\lstinline!client_assertion_type! & у &
+Тип аутентификатора ПС & 
+\ref{PARAMS.ClientAssertionType}\\
+\hline
+%	
+\lstinline!client_assertion! & у & 
+Аутентификатор ПС & 
+\ref{PARAMS.ClientAssertion}\\
+\hline
+%
+\hline
+\multicolumn{4}{|c|}{Запрос на обновление билетов (POST/Form)}\\
+\hline
+\hline
+%
+\lstinline!grant_type! & + & 
+Значение \lstinline!"refresh_token"! & 
+\ref{PARAMS.GrantType}\\
+\hline
+%
+\lstinline!refresh_token! & + &
+БО & 
+\ref{PARAMS.RefreshToken}\\
+\hline
+%	
+\lstinline!client_id! & у & 
+Идентификатор ПС & 
+\ref{PARAMS.ClientId}\\
+\hline
+%	
+\lstinline!client_secret! & у & 
+Секрет аутентификации ПС$\mbox{}^*$ & 
+\ref{PARAMS.ClientSecret}\\
+\hline
+%
+\lstinline!client_assertion_type! & у &
+Тип аутентификатора ПС & 
+\ref{PARAMS.ClientAssertionType}\\
+\hline
+%	
+\lstinline!client_assertion! & у & 
+Аутентификатор ПС & 
+\ref{PARAMS.ClientAssertion}\\
+\hline
+%	
+\lstinline!scope! & о & 
+Запрашиваемая область действия & 
+\ref{PARAMS.Scope}\\
+\hline
+%
+\hline
+\multicolumn{4}{|c|}{Успешный ответ на запрос на выпуск билетов (JSON)}\\
+\hline
+\hline
+%
+\lstinline!access_token! & + &
+БД & 
+\ref{PARAMS.AccessToken}\\
+\hline
+%
+\lstinline!token_type! & + & 
+Тип БД & 
+\ref{PARAMS.TokenType}\\
+\hline
+%
+\lstinline!expires_in! & р & 
+Срок действия БД & 
+\ref{PARAMS.ExpiresIn}\\
+\hline
+%
+\lstinline!id_token! & + &
+БА & 
+\ref{PARAMS.IdToken}\\
+\hline
+%
+\lstinline!refresh_token! & у &
+БО & 
+\ref{PARAMS.RefreshToken}\\
+\hline
+%	
+\lstinline!scope! & у & 
+Разрешенная область действия & 
+\ref{PARAMS.Scope}\\
+\hline
+%
+\hline
+\multicolumn{4}{|c|}{Успешный ответ на запрос на обновление билетов (JSON)}\\
+\hline
+\hline
+%
+\lstinline!access_token! & + & 
+Билет доступа & 
+\ref{PARAMS.AccessToken}\\
+\hline
+%
+\lstinline!token_type! & + &
+Тип билета доступа & 
+\ref{PARAMS.TokenType}\\
+\hline
+%
+\lstinline!expires_in! & р & 
+Срок действия БД & 
+\ref{PARAMS.ExpiresIn}\\
+\hline
+%
+\lstinline!id_token! & о &
+БА & 
+\ref{PARAMS.IdToken}\\
+\hline
+%
+\lstinline!refresh_token! & у &
+БО & 
+\ref{PARAMS.RefreshToken}\\
+\hline
+%	
+\lstinline!scope! & у & 
+Разрешенная область действия & 
+\ref{PARAMS.Scope}\\
+\hline
+%
+\hline
+\multicolumn{4}{|c|}{Ответ об ошибке (JSON)}\\
+\hline
+\hline
+%
+\lstinline!error! & $+$ & 
+Код ошибки & 
+\ref{PARAMS.Error}\\
+\hline
+%
+\lstinline!error_description! & о & 
+Описание ошибки &
+\ref{PARAMS.ErrorDescr}\\
+\hline
+%
+\lstinline!error_uri! & о & 
+Адрес веб-страницы с информацией об ошибке &
+\ref{PARAMS.ErrorUri}\\
+\hline
+\multicolumn{4}{p{0.95\linewidth}}{$\mbox{}^*$~--- может передаваться 
+отдельно по правилам схемы аутентификации HTTP Basic.}
+\end{tabular}
+\end{table}
+
+Для информирования СИ о необходимости выпуска БО в параметр \lstinline{scope} 
+запроса на узел Authorization (см. таблицу~\ref{Table.OIDC.Authorization}) 
+включается строка \lstinline{"offline_access"}. 
+%
+Для информирования о необходимости перевыпуска БО эта же строка включается в 
+параметр \lstinline{scope} запроса на обновление.
+%
+СИ может выпускать и перевыпускать БО в других ситуациях, без явного 
+запроса со стороны ПС.
+
+В запросах на узел Token параметры \lstinline{client_id}, 
+\lstinline{client_secret}, \lstinline{client_assertion_type} и 
+\lstinline{client_assertion} используются для аутентификации ПС в момент 
+обращения.
+%
+Предусмотрены 4 метода аутентификации.
+
+\begin{enumerate}
+\item
+Метод \lstinline{client_secret_basic}.
+%
+При регистрации ПС согласует со СИ секрет аутентификации 
+\lstinline{client_secret}, СИ связывает секрет с идентификатором ПС 
+\lstinline{client_id}.
+%
+Секрет передается в качестве аутентификатора ПС в запросе на узел.
+Секрет сопровождается идентификатором ПС.
+%
+СИ определяет по идентификатору зарегистрированный секрет, а затем сравнивает  
+его с присланным. 
+%
+Секрет \lstinline{client_secret} передается по правилам схемы аутентификации 
+HTTP Basic (в заголовке \lstinline{Authorization}).
+
+\item
+Метод \lstinline{client_secret_post}.
+%
+Отличается от метода \lstinline{client_secret_basic} только тем, что 
+\lstinline{client_secret} кодируется вместе с остальными параметрами 
+запроса по схеме Form.
+
+\item
+Метод \lstinline{client_secret_jwt}.
+%
+При регистрации ПС согласует со СИ секретный ключ имитозащиты
+\lstinline{client_secret}.
+%
+В качестве аутентификатора передается объект JWT, который включает 
+идентификаторы ПС и СИ, уникальный идентификатор самого объекта, отметки 
+времени, а также имитовставку всех этих данных, вычисленную на ключе 
+\lstinline{client_secret}.
+%
+СИ определяет по идентификатору зарегистрированный ключ и проверяет на нем 
+имитовставку.  
+%
+Объект JWT передается в параметре \lstinline{client_assertion} запроса.
+%
+Метод аутентификации указывается в параметре \lstinline{client_assertion_type}.
+
+\item
+Метод \lstinline{private_key_jwt}.
+%
+Отличается от метода \lstinline{client_secret_jwt} тем, что вместо имитовставки 
+используется ЭЦП. 
+%
+Данные объекта JWT подписываются на личном ключе ПС. СИ проверяет подпись 
+на соответствующем открытом ключе. Сертификат открытого ключа передается СИ в 
+момент регистрации ПС.
+\end{enumerate}
+

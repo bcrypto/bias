@@ -1,0 +1,189 @@
+\hiddensection{Запрос утверждений}\label{CLAIMS.ReqWith}
+
+\subsection{Запрос утверждений с помощью параметра \lstinline{scope}} 
+\label{CLAIMS.ReqWithScope}
+
+Утверждения о пользователе могут быть запрошены с помощью параметра
+\lstinline{scope}. Параметр включается в запрос авторизации~/ аутентификации 
+и учитывается СИ при выпуске БД и БА.
+%
+Утверждения возвращаются в ответе с узла UserInfo при предъявлении 
+БД. 
+%
+Если БД не выпускается, то утверждения возвращаются в БА. 
+
+Утверждения, которые запрашиваются с помощью параметра \lstinline{scope},
+считаются несущественными.
+
+Перечень запрашиваемых утверждений регулируется следующими лексемами 
+\lstinline{scope}: 
+\begin{itemize}
+\item
+\lstinline{"profile"}~--- запрашиваются утверждения профиля по умолчанию: 
+\lstinline{name}, 
+\lstinline{family_name}, 
+\lstinline{given_name}, 
+\lstinline{middle_name}, 
+\lstinline{nickname},
+\lstinline{preferred_username}, 
+\lstinline{profile}, 
+\lstinline{picture}, 
+\lstinline{website}, 
+\lstinline{gender}, 
+\lstinline{birthdate},
+\lstinline{zoneinfo}, 
+\lstinline{locale}, 
+\lstinline{updated_at};
+
+\item
+\lstinline{"email"}~--- 
+запрашиваются утверждения
+\lstinline{email} и \lstinline{email_verified};
+
+\item
+\lstinline{"address"}~--- 
+запрашиваются утверждения 
+\lstinline{address};
+
+\item
+\lstinline{"phone"}~--- 
+запрашиваются утверждения
+\lstinline{phone_number} и \lstinline{phone_number_verified}.
+\end{itemize}
+
+Пример запроса утверждений с помощью параметра \lstinline{scope}:
+\begin{lstlisting}
+scope=openid profile email phone
+\end{lstlisting}
+
+\subsection{Запрос утверждений с помощью параметра \lstinline{claims}}
+\label{CLAIMS.ReqWithClaims}
+
+Утверждения могут быть запрошены с помощью параметра \lstinline{claims}. 
+Параметр включается в запрос авторизации~/ аутентификации и учитывается СИ при 
+выпуске БД и БА.
+%
+Утверждения возвращаются в ответе с узла UserInfo при предъявлении БД и (или) в 
+БА. 
+%
+Параметр \lstinline{claims} определяет перечень запрашиваемых утверждений, 
+способ их возврата. 
+%
+В \lstinline{claims} предусмотрена детализация запроса по каждому утверждению.
+
+Запрос \lstinline{claims} представляется объектом JSON, который включает два 
+вложенных объекта: \lstinline{userinfo} и \lstinline{id_token}.
+%
+В объекте \lstinline{userinfo} перечисляются утверждения, которые следует возвратить 
+с узла UserInfo, в объекте \lstinline{id_token}~--- утверждения, которые 
+следует возвратить в БА.
+%
+Оба объекта являются необязательными.
+
+Запрос \lstinline{claims} может включать другие объекты и, соответственно, 
+перечни утверждений. Например, дополнительный перечень может касаться 
+дополнительного узла ресурсов. Объекты \lstinline{claims}, которые не могут 
+быть распознаны, должны игнорироваться.
+
+Если в \lstinline{claims} включен объект \lstinline{userinfo}, то запрашиваемые 
+в нем утверждения добавляются к перечню утверждений, запрашиваемых через 
+параметр \lstinline{scope}. Включение \lstinline{userinfo} в \lstinline{claims}
+должно сопровождаться добавлением лексемы \lstinline{"token"} в параметр
+\lstinline{response_type}, т.е. запросом БД.
+
+Если в \lstinline{claims} включен объект \lstinline{id_token}, то запрашиваемые 
+в нем утверждения добавляются к перечню утверждений об аутентификации, 
+которые по умолчанию (без явного запроса) включаются в БА. 
+
+В объектах \lstinline{userinfo} и \lstinline{id_token} имена полей совпадают
+с именами запрашиваемых утверждений. Поле либо принимает значение 
+\lstinline{null}, либо значением поля является объект JSON с деталями запроса 
+утверждения. 
+
+Значение \lstinline{null} означает, что утверждение запрашивается
+в режиме по умолчанию, в частности, как несущественное. 
+
+\subsection{Детали запроса утверждения в \lstinline{claims}}\label{CLAIMS.IndClaim}
+
+Объект JSON с деталями запроса утверждения включает поля 
+\lstinline{essential}, \lstinline{value} и \lstinline{values},
+каждое из которых является необязательным.
+%
+Могут вводиться дополнительные поля.  
+%
+Поле, которое не может быть распознано, должно игнорироваться.
+
+Поле \lstinline{essential} содержит признак существенности утверждения. 
+Например, утверждение \lstinline{auth_time} запрашивается как 
+существенное следующим образом: 
+\begin{lstlisting}
+"auth_time": {"essential": true}
+\end{lstlisting}
+
+По умолчанию \lstinline{essential} принимает значение \lstinline{false}.
+
+Поле \lstinline{value} задает определенное значение запрашиваемого 
+утверждения. Например, сослаться на пользователя с идентификатором 
+\lstinline{"248289761001"} при запросе утверждений можно следующим образом:
+\begin{lstlisting}
+"sub": {"value": "248289761001"}
+\end{lstlisting}
+
+В \lstinline{value} должно указываться корректное значение утверждения. 
+
+Поле \lstinline{values} задает набор определенных значений запрашиваемого 
+утверждения. Значения задаются в порядке убывания приоритета.
+%
+Например, запросить второй и первый уровни гарантии аутентификации,
+отдавая приоритет второму, можно следующим образом:
+\begin{lstlisting}
+"acr": {"essential": true,
+        "values": ["2", "1"]}
+\end{lstlisting}
+
+В \lstinline{values} должны указываться корректные значения утверждения.
+
+Пример запроса утверждений через \lstinline{claims}:
+\begin{lstlisting}
+ {
+  "userinfo":
+  {
+   "given_name": {"essential": true},
+   "nickname": null,
+   "email": {"essential": true},
+   "email_verified": {"essential": true},
+   "picture": null
+ },
+  "id_token":
+  {
+   "auth_time": {"essential": true},
+   "acr": {"values": ["2", "1"] }
+  }
+ }
+\end{lstlisting}
+
+\subsection{Запрос утверждения \lstinline{acr}}\label{CLAIMS.ReqAcr}
+
+Запрашивая утверждение \lstinline{acr} в параметре \lstinline{claims}, ПС 
+предлагает СИ поддержать один из уровней гарантий пользователя, указанных в 
+качестве допустимых значений \lstinline{acr}. 
+
+Если утверждение \lstinline{acr} запрашивается как существенное,
+то СИ должен поддержать предложение СИ. 
+%
+Для этого СИ может провести повторную аутентификацию пользователя. 
+%
+Если СИ не может поддержать один из запрошенных уровней гарантий, 
+то это должно трактоваться как неуспешная попытка аутентификации.
+
+Если утверждение \lstinline{acr} запрашивается как несущественное,
+то СИ не обязательно поддерживать один из запрошенных уровней.
+СИ может возвратить в \lstinline{acr} достигнутый уровень 
+или вообще не возвращать \lstinline{acr}.
+
+Передача предпочтительных уровней гарантий аутентификации в параметре 
+\lstinline{acr_values} (см.~\ref{PARAMS.AcrValues}) также считается 
+запросом утверждения \lstinline{acr}. При этом утверждение запрашивается
+как несущественное. Поведение при запросе \lstinline{acr} одновременно через 
+\lstinline{claims} и \lstinline{acr_values} не определено.
+	

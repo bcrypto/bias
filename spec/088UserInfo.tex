@@ -1,0 +1,97 @@
+\section{Узел UserInfo}\label{OIDC.UserInfo}
+
+Узел UserInfo обрабатывает запросы на предоставление сведений 
+об аутентифицированном пользователе. 
+% 
+К узлу обращается ПС, предъявляя ранее полученный БД.
+%
+СИ проверяет билет и, в случае успеха, возвращает утверждения о пользователе.
+
+% todo: В адресе узла должна использоваться схема https.
+
+Запрос на узел и соответствующие ответы описаны в 
+таблице~\ref{Table.OIDC.UserInfo}.
+%
+Запрос и ответы могут включать параметры, дополнительные к перечисленным в 
+таблице. 
+
+\begin{table}[H]
+\caption{Узел UserInfo: запрос и ответы}\label{Table.OIDC.UserInfo}  
+\begin{tabular}{|l|c|p{8.9cm}|l|}
+\hline
+\multirow{2}{*}{Параметр} & Вклю- & \multirow{2}{*}{Описание} & \multirow{2}{*}{Ссылка}\\
+                          & чение &&\\
+\hline
+\hline
+\multicolumn{4}{|c|}{Запрос (GET/Bearer или POST/Bearer)}\\
+\hline
+\hline
+%
+\lstinline!access_token! & + & 
+БД & 
+\ref{PARAMS.AccessToken}\\
+\hline
+%
+\hline
+\multicolumn{4}{|c|}{Успешный ответ (JSON или JWT)}\\
+\hline
+\hline
+%
+\lstinline!sub! & + &
+Идентификатор пользователя & 
+\ref{CLAIMS.Sub}\\
+\hline
+%
+\lstinline!iss! & ру & 
+Идентификатор СИ & 
+\ref{CLAIMS.Iss}\\
+\hline
+%
+\lstinline!aud! & ру & 
+Идентификатор ПС & 
+\ref{CLAIMS.Aud}\\
+\hline
+%
+\hline
+\multicolumn{4}{|c|}{Ответ об ошибке (WWW-Authenticate)}\\
+\hline
+\hline
+%
+\lstinline!error! & ру & 
+Код ошибки & 
+\ref{PARAMS.Error}\\
+\hline
+%
+\lstinline!error_description! & о & 
+Описание ошибки &
+\ref{PARAMS.ErrorDescr}\\
+\hline
+%
+\lstinline!error_uri! & о & 
+Адрес веб-страницы с информацией об ошибке &
+\ref{PARAMS.ErrorUri}\\
+\hline
+%
+\lstinline!scope! & o & 
+Требуемая область действия & 
+\ref{PARAMS.Scope}\\
+\hline
+\end{tabular}
+\end{table}
+
+
+Узел должен поддерживать HTTP-методы GET и POST. Для обращения к узлу 
+рекомендуется использовать метод GET. 
+%
+Отправляемый БД должен кодироваться по схеме Bearer.
+
+Успешный ответ с утверждениями о пользователе должен кодироваться по схеме JSON 
+и JWT. 
+%
+Схема JWT применяется тогда, когда утверждения подписываются и (или) 
+конвертуются. 
+%
+Утверждения могут только подписываться, могут только конвертоваться и могут 
+сначала подписываться, а затем конвертоваться.
+
+Ответ об ошибке должен кодироваться по схеме WWW-Authenticate.

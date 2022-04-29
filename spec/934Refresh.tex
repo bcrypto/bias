@@ -1,0 +1,71 @@
+\hiddensection{Запрос на обновление билетов}\label{REQRESP.Refresh}
+
+\subsection{Обработка запроса}\label{REQRESP.Refresh.Req}
+
+При получении запроса на обновление билетов СИ должен проверить, что все 
+включенные в запрос параметры являются корректными и все требуемые параметры 
+включены в запрос.
+%
+СИ должна игнорировать нераспознанные параметры.
+
+Если запрос является корректным, то СИ должна выполнить следующие действия:
+\begin{enumerate}
+\item 
+Убедиться, что БО был выпущен для ПС, от которой он был получен.
+
+\item 
+Убедиться, что ПС аутентифицирована в соответствии с методом, указанным 
+для данной ПС при регистрации.
+
+\item 
+Проверить, что у БО не истек срок действия.
+\end{enumerate}
+
+Пример запроса на обновление билетов:
+\begin{lstlisting}
+ POST /token HTTP/1.1
+ Host: server.example.com
+ Authorization: Basic czZCaGRSa3F0MzpnWDFmQmF0M2JW
+ Content-Type: application/x-www-form-urlencoded
+
+ grant_type=refresh_token
+    &refresh_token=a7R~64-qTmR.IyT+FwT_t5
+\end{lstlisting}
+
+\subsection{Обработка успешного ответа}\label{REQRESP.Refresh.Resp}
+
+При получении успешного ответа ПС должна проверить, что все
+требуемые параметры включены в ответ и что все параметры ответа являются
+корректными. ПС должна игнорировать нераспознанные параметры ответа.
+
+Если в ответе возвращается БА, то ПС должна обработать его по правилам, 
+установленным в~\ref{IDTOKEN.Process} с учетом~\ref{IDTOKEN.Refresh}. 
+%
+Если БА включает утверждение \lstinline{at_hash}, то ПС с его помощью 
+может проверить соответствие БА и БД.
+
+Пример успешного ответа, который включает только БД:
+%
+\begin{lstlisting}
+HTTP/1.1 200 OK
+ContentType: application/json
+CacheControl: nostore
+Pragma: nocache
+{
+ "access_token": "t0pL3a.Y8d_vI+5qF~2-h4",
+ "token_type": "Bearer",
+ "expires_in": 300
+}
+\end{lstlisting}
+
+\subsection{Ответ при ошибке}\label{REQRESP.Refresh.Error}
+
+Если запрос на обновление билетов признан некорректным, то СИ должен возвратить 
+ответ об ошибке с одним из следующих кодов: 
+\lstinline{invalid_request},
+\lstinline{invalid_grant},
+\lstinline{invalid_client}, 
+\lstinline{unsupported_grant_type}. 
+
+
+

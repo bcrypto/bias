@@ -1,0 +1,88 @@
+\hiddensection{Запрос на узел UserInfo}\label{REQRESP.UserInfo}
+
+\subsection{Обработка запроса}\label{REQRESP.UserInfo.Req}
+
+При получении запроса на узел UserInfo СР должен: 
+\begin{enumerate}
+\item 
+Проверить, что БД передан по схеме Bearer.
+
+\item 
+Проверить, что БД имеет корректный формат, включая длину.
+
+\item 
+Проверить, что срок действия БД не истек и что билет не отозван.
+\end{enumerate}
+
+Пример запроса:
+%
+\begin{lstlisting}
+GET /userinfo HTTP/1.1
+Host: server.example.com
+Authorization: Bearer mF_9.B5f-4.1JqM3dpR+G~
+\end{lstlisting}
+
+\subsection{Обработка успешного ответа}\label{REQRESP.UserInfo.Resp}
+
+При получении успешного ответа ПС должна выполнить следующие действия:
+%
+\begin{enumerate}
+\item 
+Если ответ конвертован, то снять с него защиту, используя ключи и алгоритмы, 
+которые ПС определила для этих целей при регистрации.
+%
+Если во время регистрации ПС конвертование ответов было для нее
+предусмотрено, но ответ не конвертован, то его необходимо отклонить.
+
+\item 
+Проверить, что значение утверждения \lstinline{sub} из
+ответа совпадает со значением утверждения \lstinline{sub} из БА.
+
+\item
+Если ответ подписан, то проверить, что идентификатор СР как
+издателя ответа, который ПС получает при регистрации, совпадает со значением
+утверждения \lstinline{iss}.
+
+\item 
+Если ответ подписан, то проверить, что утверждение \lstinline{aud} включает 
+идентификатор \lstinline{client_id}, назначенный ПС при регистрации.
+%
+Ответ должен быть отвергнут, если идентификатор ПС не включен в \lstinline{aud}
+или если \lstinline{aud} содержит идентификатор стороны, которой ПС не 
+доверяет. 
+
+\item 
+Проверить подпись БА. При проверке ПС должна использовать открытые ключи, 
+предоставленные ей при регистрации или полученные другим доверенным способом. 
+\end{enumerate}
+
+Если какая-либо из проверок не проходит, то утверждения из ответа 
+не должны использоваться ПС. 
+ 
+Пример ответа в виде объекта JSON:
+%
+\begin{lstlisting}
+HTTP/1.1 200 OK
+ContentType:
+application/json
+
+{
+ "sub": "248289761001",
+ "name": "Victor Mitskevich",
+ "given_name": "Victor",
+ "family_name": "Mitskevich",
+ "preferred_username": "v.mitskevich",
+ "email": "vicm@example.com",
+ "picture": "http://example.com/vicm/me.jpg"
+}
+\end{lstlisting}
+
+\subsection{Ответ об ошибке}\label{REQRESP.UserInfo.Error}
+
+Если запрос признан некорректным, то СР должен возвратить ПС 
+ответ об ошибке с одним из следующих кодов ошибки: 
+\lstinline{invalid_request},
+\lstinline{invalid_token}, 
+\lstinline{insufficient_scope}. 
+
+% todo: уточнить, ведь могут возвращаться коды ошибок HTTP, без error

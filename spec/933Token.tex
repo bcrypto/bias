@@ -1,0 +1,102 @@
+\hiddensection{Запрос на выпуск билетов}\label{REQRESP.Token}
+
+\subsection{Обработка запроса}\label{REQRESP.Token.Req}
+
+При получении запроса на выпуск билетов СИ должен проверить, что все включенные в
+запрос параметры являются корректными и все требуемые параметры включены в
+запрос.
+%
+СИ должна игнорировать нераспознанные параметры.
+
+Если запрос является корректным, то СИ должна выполнить следующие действия:
+\begin{enumerate}
+\item 
+Аутентифицировать ПС, если она еще не была аутентифицирована.
+
+\item 
+Убедиться, что код авторизации был выпущен для ПС, которая обратилась с 
+запросом.
+
+\item Проверить, что у кода авторизации не истек срок действия.
+
+\item Проверить, если это возможно, что код авторизации ранее 
+не использовался. Если код авторизации уже использовался, 
+то СИ должен отказать в обработке запроса, содержащего данный код, 
+и должен отозвать, если это возможно, билет, 
+который был выпущен на основе данного кода авторизации.
+
+\item Если запрос содержит параметр \lstinline{state},
+то проверить, что значение этого параметра совпадает со значением 
+параметра \lstinline{state} из соответствующего запроса аутентификации.
+
+\item Убедиться, что значение параметра \lstinline{redirect_uri} совпадает 
+со значением параметра \lstinline{redirect_uri} из запроса аутентификации. 
+Если параметр \lstinline{redirect_uri} отсутствует и для ПС
+зарегистрировано только одно возможное значение 
+для параметра \lstinline{redirect_uri}, то СИ может возвратить ошибку.
+
+\item  
+Проверить, что код авторизации был выпущен в ответ на запрос авторизации~/ 
+аутентификации. 
+\end{enumerate}
+
+Пример запроса на выпуск билетов:
+\begin{lstlisting}
+  POST /token HTTP/1.1
+  Host: server.example.com
+  Content-Type: application/x-www-form-urlencoded
+  Authorization: Basic czZCaGRSa3F0MzpnWDFmQmF0M2JW
+
+  grant_type=authorization_code&code=SplxlOBeZQQYbYS6WxSbIA
+    &redirect_uri=https%3A%2F%2Fclient.example.org%2Fcb
+\end{lstlisting}
+
+\subsection{Обработка успешного ответа}\label{REQRESP.Token.Resp}
+
+При получении успешного ответа ПС должна проверить, что все
+требуемые параметры включены в ответ и что все параметры ответа являются
+корректными. ПС должна игнорировать нераспознанные параметры ответа.
+
+ПС должна обработать БА по правилам, установленным в~\ref{IDTOKEN.Process}.
+%
+Если БА включает утверждение \lstinline{at_hash}, то ПС с его помощью 
+может проверить соответствие БА и БД.
+
+Пример успешного ответа, который включает БД и БА:
+%
+\begin{lstlisting}
+HTTP/1.1 200 OK
+ContentType: application/json
+CacheControl: nostore
+Pragma: nocache
+
+{
+ "access_token": "mF_9.B5f-4.1JqM3/3R+G~",
+ "token_type": "Bearer",
+ "expires_in": 300,
+ "id_token": "eyJhbGciOiJSUzI1NiIsImtpZCI6IjFlOWdkazcifQ.
+   ewogImlzcyI6ICJodHRwOi8vc2VydmVyLmV4YW1wbGUuY29tIiwKIC
+   JzdWIiOiAiMjQ4Mjg5NzYxMDAxIiwKICJhdWQiOiAiczZCaGRSa3F0
+   MyIsCiAibm9uY2UiOiAibi0wUzZfV3pBMk1qIiwKICJleHAiOiAxMz
+   ExMjgxOTcwLAogImlhdCI6IDEzMTEyODA5NzAKfQ.ggW8hZ1EuVLux
+   NuuIJKX_V8a_OMXzR0EHR9R6jgdqrOOF4daGU96Sr_P6qJp6IcmD3H
+   P99Obi1PRscwh3LOp146waJ8IhehcwL7F09JdijmBqkvPeB2T9CJNq
+   eGpegccMg4vfKjkM8FcGvnzZUN4_KSP0aAp1tOJ1zZwgjxqGByKHiO
+   tX7TpdQyHE5lcMiKPXfEIQILVq0pc_E2DzL7emopWoaoZTF_m0_N0Y
+   zFC6g6EJbOEoRoSK5hoDalrcvRYLSrQAZZKflyuVCyixEoV9GfNQC3
+   _osjzw2PAithfubEEBLuVVk4XUVrWOLrLl0nx7RkKU8NXNHqrvKMzqg"
+}
+\end{lstlisting}
+
+\subsection{Ответ об ошибке}\label{REQRESP.Token.Error}
+
+Если запрос на выпуск билетов признан некорректным по причине 
+истечения срока действия или некорректности кода авторизации
+или по другим причинам, то СИ должен возвратить ответ об ошибке с одним из 
+следующих кодов:
+\lstinline{invalid_request}, %+
+\lstinline{invalid_client}, %-
+\lstinline{invalid_grant}, %-
+\lstinline{unauthorized_client}, %+
+\lstinline{unsupported_grant_type}, %-
+\lstinline{invalid_scope}. %+
