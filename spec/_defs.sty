@@ -49,7 +49,6 @@
 %%%%%%%%%%% Environments %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \newcounter{note}[subsubsection]
-\@addtoreset{reqctr}{subsubsection}
 
 \newenvironment{note*}{
   \def\thenotename{Примечание~---~}
@@ -128,7 +127,7 @@
   \def\thechapter{\@arabic\c@chapter}
 }
 
-%%%%%%%%%%%%%%%%%%%%%%%% Local %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%% Locale %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \addto\captionsrussian{%
   \renewcommand{\figurename}{Рисунок}
@@ -137,14 +136,9 @@
   \renewcommand{\bibname}{Библиография}
 }
 
-\addto\captionsrussian{% 
-  \renewcommand*{\glossaryname}{Термины и определения}%
-}
-
-\providecommand{\CryptoDisk}{<<{Криптодиск}>>\xspace}
 \hyphenation{СКЗИ}
 
-%%%%%%%%%%%%%%%%%%%%%%%% Local %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%% Listings %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \lstset{
   xleftmargin=\parindent,         % leftmargin
@@ -171,8 +165,4 @@
 morekeywords={
 }}
 
-
-
-%%
-%%
 \endinput
