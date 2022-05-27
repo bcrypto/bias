@@ -145,21 +145,21 @@ scope=openid profile email phone
 
 Пример запроса утверждений через \lstinline{claims}:
 \begin{lstlisting}
- {
+{
   "userinfo":
   {
-   "given_name": {"essential": true},
-   "nickname": null,
-   "email": {"essential": true},
-   "email_verified": {"essential": true},
-   "picture": null
- },
+    "given_name": {"essential": true},
+    "nickname": null,
+    "email": {"essential": true},
+    "email_verified": {"essential": true},
+    "picture": null
+  },
   "id_token":
   {
-   "auth_time": {"essential": true},
-   "acr": {"values": ["2", "1"] }
-  }
- }
+    "auth_time": {"essential": true},
+    "acr": {"values": ["2", "1"] }
+   }
+}
 \end{lstlisting}
 
 \subsection{Запрос утверждения \lstinline{acr}}\label{CLAIMS.ReqAcr}
