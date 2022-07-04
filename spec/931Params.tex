@@ -24,7 +24,7 @@ jws = base64url 2( "." base64url )
     ; header.payload.signature
 jwe = base64url 4( "." base64url )
     ; header.encrypted-key.iv.ciphertext.tag
-jwt = jws / jwt
+jwt = jws / jwe
 \end{lstlisting}
 
 Дополнительно используется определение \lstinline{URI-reference}, 
@@ -880,8 +880,8 @@ refresh-token = 22*VSCHAR
 Параметры объекта JWT имеют приоритет перед параметрами, переданными обычным 
 образом.
 
-Параметры \lstinline{response_type} и \lstinline{client_id} должны передаваться 
-обычным образом. При включении параметров в объект JWT их значения должны быть 
+Параметры \lstinline{response_type} и \lstinline{client_id} должны передаваться
+обычным образом. При включении параметров в объект JWT их значения должны
 повторяться.
 
 Параметр \lstinline{scope} также должен передаваться обычным образом и при 
