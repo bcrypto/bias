@@ -138,7 +138,23 @@
 % corresponding authenticator
 
 {\bf \thedefctr~идентификационные данные}:
-Описание характеристик идентичности. 
+\addendum{Информация, которая характеризует определенную сторону в 
+определенном контексте.}
+
+% identity: 
+%   An attribute or set of attributes that uniquely describe a subject within 
+%   a given context.
+%   .
+%   Information that is unique within a security domain and which 
+%   is recognized as denoting a particular entity within that domain.
+%   .
+%   The set of physical and behavioral characteristics by which 
+%   an individual is uniquely recognizable.
+
+% \begin{note*}
+% В разных контекстах могут использоваться различные характеристики одной 
+% и той же стороны.
+% \end{note*}
 
 {\bf \thedefctr~идентификация}: % skzi
 Назначение уникального идентификатора или сравнение предъявляемого 
@@ -146,26 +162,9 @@
 
 \begin{note*}
 В настоящем стандарте под идентификацией в основном понимается назначение
-идентификаторов с предшествующими регистрацией и подтверждением личности.
+идентификаторов с предшествующими регистрацией, \addendum{включая сбор
+идентификационных данных}, и подтверждением личности. 
 \end{note*}
-
-{\bf \thedefctr~идентичность}:
-Набор характеристик, который однозначно описывает определенную сторону в 
-определенном контексте.
-
-% An attribute or set of attributes that uniquely describe a subject within a 
-% given context.
-
-% Information that is unique within a security domain and which is recognized as 
-% denoting a particular entity within that domain.
-
-% The set of physical and behavioral characteristics by which an individual is 
-% uniquely recognizable.
-
-%\begin{note*}
-%В разных контекстах могут использоваться различные характеристики одной и той 
-%же стороны.
-%\end{note*}
 
 %{\bf \thedefctr~имя}:
 %Вид идентификационных данных, строка сравнительно небольшой длины
@@ -264,8 +263,9 @@
 \end{note*}
 
 {\bf \thedefctr~регистрационный центр; РЦ}:
-Сторона, которая формирует идентификационные данные пользователя
-или проверяет и заверяет их для службы идентификации. 
+Сторона, которая \addendum{проводит сбор} идентификационны\addendum{x} 
+данны\addendum{x} пользователя или проверяет и заверяет их для службы 
+идентификации.
 
 %\begin{note*}
 %Регистрационный центр может входить в состав службы идентификации 
