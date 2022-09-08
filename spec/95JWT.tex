@@ -44,8 +44,9 @@ JWT (JSON Web Token, \cite{RFC7519}).
 подпись.
 \end{enumerate}
 
-Заголовок описывает алгоритмы ЭЦП. Предусмотрены следующие варианты
-(см. определения алгоритмов и параметров в СТБ~34.101.45 и СТБ~34.101.77):
+Заголовок описывает алгоритмы выработки и проверки ЭЦП. Предусмотрены следующие 
+варианты (см. определения алгоритмов и параметров в СТБ~34.101.45 и 
+СТБ~34.101.77): 
 \begin{itemize}
 \item
 \lstinline{"BIGNS128"}~--- алгоритмы \lstinline{bign-with-hbelt} с параметрами  
@@ -104,14 +105,14 @@ JWT (JSON Web Token, \cite{RFC7519}).
 (см. определения алгоритмов и параметров в СТБ 34.101.45):
 \begin{itemize}
 \item
-\lstinline{"BIGNT128"}~--- алгоритмы \lstinline{bign-keytransport} с 
-параметрами \lstinline{bign-curve256v1};
+\lstinline{"BIGNT128"}~--- алгоритмы транспорта ключа 
+\lstinline{bign-keytransport} с параметрами \lstinline{bign-curve256v1};
 \item
-\lstinline{"BIGNT192"}~--- алгоритмы \lstinline{bign-keytransport} с 
-параметрами \lstinline{bign-curve384v1};
+\lstinline{"BIGNT192"}~--- алгоритмы транспорта ключа 
+\lstinline{bign-keytransport} с параметрами \lstinline{bign-curve384v1};
 \item
-\lstinline{"BIGNT256"}~--- алгоритмы \lstinline{bign-keytransport} с 
-параметрами \lstinline{bign-curve512v1}.
+\lstinline{"BIGNT256"}~--- алгоритмы транспорта ключа 
+\lstinline{bign-keytransport} с параметрами \lstinline{bign-curve512v1}. 
 \end{itemize}
 
 Выбранный вариант должен быть указан в параметре \lstinline{alg} заголовка. 
