@@ -73,7 +73,7 @@
 аутентификации на СИ: 
 %
 \begin{lstlisting}
-HTTP/1.1 303 See Other 
+HTTP/1.1 302 Found
 Location: https://server.example.com/authorize?
   response_type=code
   &scope=openid%20profile%20email
@@ -112,7 +112,7 @@ Host: server.example.com
 Пример успешного ответа для коммуникационной схемы Code:
 %
 \begin{lstlisting}
-HTTP/1.1 303 See Other
+HTTP/1.1 302 Found
 Location: https://client.example.org/cb?
   code=SplxlOBeZQQYbYS6WxSbIA
   &state=af0ifjcsldkj
@@ -121,13 +121,13 @@ Location: https://client.example.org/cb?
 Пример успешного ответа для коммуникационной схемы Implicit:
 %
 \begin{lstlisting}
-HTTP/1.1 303 See Other
+HTTP/1.1 302 Found
 Location: https://client.example.org/cb#
- access_token=mF_9.B5f-4.1JqM3dpR+G~
- &token_type=bearer
- &id_token=eyJ0 ... NiJ9.eyJ1c ... I6IjIifX0.DeWt4Qu ... ZXso
- &expires_in=300
- &state=af0ifjcsldkj
+  access_token=mF_9.B5f-4.1JqM3dpR+G~
+  &token_type=bearer
+  &id_token=eyJ0...NiJ9.eyJ1c...I6IjIifX0.DeWt4Qu...ZXso
+  &expires_in=300
+  &state=af0ifjcsldkj
 \end{lstlisting}
 
 \subsection{Ответ об ошибке}\label{REQRESP.Auth.Error}
@@ -163,12 +163,10 @@ Location: https://client.example.org/cb#
 
 Пример ответа об ошибке с перенаправлением КП на ПС:
 \begin{lstlisting}
-HTTP/1.1 303 See Other
+HTTP/1.1 302 Found
 Location: https://client.example.org/cb?
   error=invalid_request
   &error_description=Unsupported%20response_type%20value
   &state=af0ifjsldkj
 \end{lstlisting}
-
-
 

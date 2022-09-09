@@ -44,13 +44,14 @@
 
 Пример запроса на выпуск билетов:
 \begin{lstlisting}
-  POST /token HTTP/1.1
-  Host: server.example.com
-  Content-Type: application/x-www-form-urlencoded
-  Authorization: Basic czZCaGRSa3F0MzpnWDFmQmF0M2JW
+POST /token HTTP/1.1
+Host: server.example.com
+Content-Type: application/x-www-form-urlencoded
+Authorization: Basic czZCaGRSa3F0MzpnWDFmQmF0M2JW
 
-  grant_type=authorization_code&code=SplxlOBeZQQYbYS6WxSbIA
-    &redirect_uri=https%3A%2F%2Fclient.example.org%2Fcb
+grant_type=authorization_code
+  &code=SplxlOBeZQQYbYS6WxSbIA
+  &redirect_uri=https%3A%2F%2Fclient.example.org%2Fcb
 \end{lstlisting}
 
 \subsection{Обработка успешного ответа}\label{REQRESP.Token.Resp}
@@ -73,20 +74,10 @@ Cache-Control: no-store
 Pragma: no-cache
 
 {
- "access_token": "mF_9.B5f-4.1JqM3/3R+G~",
- "token_type": "Bearer",
- "expires_in": 300,
- "id_token": "eyJhbGciOiJSUzI1NiIsImtpZCI6IjFlOWdkazcifQ.
-   ewogImlzcyI6ICJodHRwOi8vc2VydmVyLmV4YW1wbGUuY29tIiwKIC
-   JzdWIiOiAiMjQ4Mjg5NzYxMDAxIiwKICJhdWQiOiAiczZCaGRSa3F0
-   MyIsCiAibm9uY2UiOiAibi0wUzZfV3pBMk1qIiwKICJleHAiOiAxMz
-   ExMjgxOTcwLAogImlhdCI6IDEzMTEyODA5NzAKfQ.ggW8hZ1EuVLux
-   NuuIJKX_V8a_OMXzR0EHR9R6jgdqrOOF4daGU96Sr_P6qJp6IcmD3H
-   P99Obi1PRscwh3LOp146waJ8IhehcwL7F09JdijmBqkvPeB2T9CJNq
-   eGpegccMg4vfKjkM8FcGvnzZUN4_KSP0aAp1tOJ1zZwgjxqGByKHiO
-   tX7TpdQyHE5lcMiKPXfEIQILVq0pc_E2DzL7emopWoaoZTF_m0_N0Y
-   zFC6g6EJbOEoRoSK5hoDalrcvRYLSrQAZZKflyuVCyixEoV9GfNQC3
-   _osjzw2PAithfubEEBLuVVk4XUVrWOLrLl0nx7RkKU8NXNHqrvKMzqg"
+  "access_token": "mF_9.B5f-4.1JqM3/3R+G~",
+  "token_type": "Bearer",
+  "expires_in": 300,
+  "id_token": "eyJ0...NiJ9.eyJ1c...I6IjIifX0.DeWt4Qu...ZXso"
 }
 \end{lstlisting}
 
