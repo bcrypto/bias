@@ -2,7 +2,7 @@
 
 \subsection{Обработка запроса}\label{REQRESP.Refresh.Req}
 
-При получении запроса на обновление билетов СИ должен проверить, что все 
+При получении запроса на обновление билетов СИ должна проверить, что все 
 включенные в запрос параметры являются корректными и все требуемые параметры 
 включены в запрос.
 %
@@ -23,13 +23,13 @@
 
 Пример запроса на обновление билетов:
 \begin{lstlisting}
- POST /token HTTP/1.1
- Host: server.example.com
- Authorization: Basic czZCaGRSa3F0MzpnWDFmQmF0M2JW
- Content-Type: application/x-www-form-urlencoded
+POST /token HTTP/1.1
+Host: server.example.com
+Authorization: Basic czZCaGRSa3F0MzpnWDFmQmF0M2JW
+Content-Type: application/x-www-form-urlencoded
 
- grant_type=refresh_token
-    &refresh_token=a7R~64-qTmR.IyT+FwT_t5
+grant_type=refresh_token
+  &refresh_token=a7R~64-qTmR.IyT+FwT_t5
 \end{lstlisting}
 
 \subsection{Обработка успешного ответа}\label{REQRESP.Refresh.Resp}
@@ -48,19 +48,20 @@
 %
 \begin{lstlisting}
 HTTP/1.1 200 OK
-ContentType: application/json
-CacheControl: nostore
-Pragma: nocache
+Content-Type: application/json
+Cache-Control: no-store
+Pragma: no-cache
+
 {
- "access_token": "t0pL3a.Y8d_vI+5qF~2-h4",
- "token_type": "Bearer",
- "expires_in": 300
+  "access_token": "t0pL3a.Y8d_vI+5qF~2-h4",
+  "token_type": "Bearer",
+  "expires_in": 300
 }
 \end{lstlisting}
 
 \subsection{Ответ при ошибке}\label{REQRESP.Refresh.Error}
 
-Если запрос на обновление билетов признан некорректным, то СИ должен возвратить 
+Если запрос на обновление билетов признан некорректным, то СИ должна возвратить 
 ответ об ошибке с одним из следующих кодов: 
 \lstinline{invalid_request},
 \lstinline{invalid_grant},

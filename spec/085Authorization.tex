@@ -260,7 +260,11 @@
 задается коммуникационная схема, которую требуется использовать.
 %
 Возможные значения параметра и соответствующие им коммуникационные схемы 
-представлены в таблице~\ref{Table.OIDC.RespType}.
+представлены в таблице~\ref{Table.OIDC.RespType}. 
+%
+В лексемах параметра перечисляются ожидаемые в ответе с узла 
+Authorization билеты: \lstinline{"code"} указывает на код 
+авторизации, \lstinline{"id_token"}~--- на БА, \lstinline{"token"}~--- на БД.
 
 \begin{table}[hbt]
 \caption{Выбор коммуникационной схемы}\label{Table.OIDC.RespType}
@@ -269,12 +273,12 @@
 Значение параметра \lstinline!response_type! & Схема\\
 \hline
 \hline
-\lstinline!"code"! & Code\\
-\lstinline!"id_token"! & Implicit\\
-\lstinline!"id_token token"! & Implicit\\
-\lstinline!"code id_token"! & Hybrid\\
-\lstinline!"code token"! & Hybrid\\
-\lstinline!"code id_token token"! & Hybrid\\
+\lstinline!"code"! & Code \\
+\lstinline!"id_token"! & Implicit \\
+\lstinline!"id_token token"! & Implicit \\
+\lstinline!"code id_token"! & Hybrid \\
+\lstinline!"code token"! & Hybrid \\
+\lstinline!"code id_token token"! & Hybrid \\
 \hline
 \end{tabular}
 \end{table}

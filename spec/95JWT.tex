@@ -1,234 +1,156 @@
 \begin{appendix}{Д}{обязательное}{Объект JWT}\label{JWT}
 
-\hiddensection{Общие сведения}
-
-% JSON Web Token (JWT) is a compact, URL-safe means of representing
-%    claims to be transferred between two parties.  The claims in a JWT
-%    are encoded as a JSON object that is used as the payload of a JSON
-%    Web Signature (JWS) structure or as the plaintext of a JSON Web
-%    Encryption (JWE) structure, enabling the claims to be digitally
-%    signed or integrity protected with a Message Authentication Code
-%    (MAC) and/or encrypted. JWTs are always
-%    represented using the JWS Compact Serialization or the JWE Compact
-%    Serialization.
-
-%    A JWT is represented as a sequence of URL-safe parts separated by
-%    period ('.') characters.  Each part contains a base64url-encoded
-%    value.  The number of parts in the JWT is dependent upon the
-%    representation of the resulting JWS using the JWS Compact
-%    Serialization or JWE using the JWE Compact Serialization.
+\hiddensection{Общие положения}
 
 БА и защищенные ответы с узла UserInfo представляют собой объекты 
-JWT (JSON Web Token) \cite{RFC7519}. 
+JWT (JSON Web Token, \cite{RFC7519}).
 %
-Имеется 3 типа таких объектов: 
+Используются объекты трех типов: 
 \begin{itemize}
 \item[1)] 
-объект JWS (JSON Web Signature) \cite{RFC7515},
-который описывает подписанные данные;
+объект JWS (JSON Web Signature, \cite{RFC7515})~--- подписанные утверждения;
 \item[2)] 
-объект JWE (JSON Web Encryption) \cite{RFC7516},
-который описывает конвертованные данные;
+объект JWE (JSON Web Encryption, \cite{RFC7516})~--- конвертованные утверждения;
 \item[3)] 
-вложенный объект JWT: содержит объект JWE
-и для этого объекта конвертуемыми данными является объект JWS.
+составной объект JWE~--- конвертованный объект JWS, т.~е. конвертованные 
+подписанные утверждения.
 \end{itemize}
-При защите БА используется либо объект JWS, либо вложенный объект JWT.
-При защите ответов с узла UserInfo может использоваться объект любого типа. 
 
-% Утверждения в JWT представляются JSON объектами, которые используются либо как 
-% открытый текст для JSON Web Signature (JWS), либо как открытый текст для JSON Web Encryption (JWE).
-Объекты JWS/JWE, в свою очередь, могут представляться двумя способами: 
-компактной JWS/JWE-сериализацией и JWS/JWE-JSON-сериализацией.
+БА представляет собой либо объект JWS, либо составной объект JWЕ.
+Ответы с узла UserInfo могут быть объектами любого типа. 
 
-Объект JWT всегда использует только компактную JWS-сериализацию (JWS 
-Compact Serialization) или компактную JWE-сериализацию (JWE Compact 
-Serialization). 
+Объект JWT состоит из нескольких кодовых слов, разделенных символом
+\lstinline{"."} (точка). Кодовые слова описывают компоненты объекта. 
 %
-В обоих вариантах сериализации объект JWT представляется как последовательность 
-закодированных по правилам base64url~\cite{RFC4648} элементов, разделенных 
-символом \lstinline{"."} (точка). 
-Количество элементов последовательности зависит от варианта сериализации.  
+Компоненты представляют собой либо двоичные данные (по умолчанию, если не 
+оговорено противное), либо объекты JSON.
+%
+Компоненты кодируются по правилам base64url~\cite{RFC4648}. 
+Компоненты, которые являются объектами JSON, предварительно кодируются по 
+правилам UTF8~\cite{UTF8}.
+
+Число компонентов зависит от типа объекта. Первым компонентом всегда является 
+заголовок. Он является объектом JSON.
 
 \hiddensection{Объект JWS}\label{JWT.JWS}
-%  JWS represents digitally signed or MACed content using JSON data
-%    structures and base64url encoding.  These JSON data structures MAY
-%    contain whitespace and/or line breaks before or after any JSON values
-%    or structural characters, in accordance with Section 2 of RFC 7159
-%    [RFC7159].  A JWS represents these logical values (each of which is
-%    defined in Section 2):
-% 
-%    o  JOSE Header
-%    o  JWS Payload
-%    o  JWS Signature
 
-Объект JWS состоит из следующих логических компонентов:
+Объект JWS состоит из трех компонентов:
+\begin{enumerate}
+\item[1)]
+заголовок;
+\item[2)]
+подписываемые данные;
+\item[3)]
+подпись.
+\end{enumerate}
+
+Заголовок описывает алгоритмы выработки и проверки ЭЦП. Предусмотрены следующие 
+варианты (см. определения алгоритмов и параметров в СТБ~34.101.45 и 
+СТБ~34.101.77): 
 \begin{itemize}
 \item
-JOSE-заголовок (JOSE Header), который задает алгоритм ЭЦП и его параметры;
+\lstinline{"BIGNS128"}~--- алгоритмы \lstinline{bign-with-hbelt} с параметрами  
+\lstinline{bign-curve256v1};
 \item
-исходные данные (JWS Payload), которые являются объектом JSON;
+\lstinline{"BIGNS192"}~--- алгоритмы \lstinline{bign-with-bash384} с 
+параметрами \lstinline{bign-curve384v1};
 \item
-подпись (JWS Signature), вычисленная от JOSE-заголовка и исходных данных.
+\lstinline{"BIGNS256"}~--- алгоритмы \lstinline{bign-with-bash512} с 
+параметрами \lstinline{bign-curve512v1}.
 \end{itemize}
 
-При использовании компактной JWS-сериализации 
-объект JWS условно описывается следующим образом:
-\begin{lstlisting}
-BASE64URL(UTF8(JOSE Header)) || '.' ||
-BASE64URL(JWS Payload) || '.' ||
-BASE64URL(JWS Signature)
-\end{lstlisting}
+Выбранный вариант должен быть указан в параметре \lstinline{alg} заголовка.
 
-В зависимости от требуемого уровня стойкости для подписи данных должен использоваться 
-алгоритм \lstinline{bign-with-hbelt} с параметрами \lstinline{bign-curve256v1}
-или алгоритм \lstinline{bign-with-bash384} с параметрами \lstinline{bign-curve384v1} 
-или алгоритм \lstinline{bign-with-bash512} с параметрами \lstinline{bign-curve512v1}. 
-Алгоритм и параметры определены в СТБ 34.101.45, СТБ 34.101.77.
-%
-Связка \lstinline{bign-with-hbelt} с \lstinline{bign-curve256v1} обозначается 
-через \lstinline{"BIGNS256"},  
-связка \lstinline{bign-with-bash384} с \lstinline{bign-curve384v1}~--- 
-через \lstinline{"BIGNS384"},
-связка \lstinline{bign-with-bash512} c \lstinline{bign-curve512v1}~--- 
-через \lstinline{"BIGNS512"}.
+\begin{example*}
+Заголовок объекта JWS: \lstinline|{"alg":"BIGNS128"}|.
+\end{example*}
 
-Примером JOSE-заголовка объекта JWS является:
-\begin{lstlisting}
-{"alg":"BIGNS256"}
-\end{lstlisting}
+Подписываемые данные представляют собой объект JSON с утверждениями. 
+
+Подпись вычисляется от слова, составленного из кодового представления 
+заголовка, затем точки, затем кодового представления подписываемых данных. 
 
 \hiddensection{Объект JWE}
 
-Объект JWE состоит из следующих логических компонентов:
+Объект JWE состоит из следующих компонентов:
+\begin{enumerate}
+\item[1)] 
+заголовок;
+\item[2)] 
+защищенный ключ (токен ключа);
+\item[3)] 
+синхропосылка;
+\item[4)]
+зашифрованные данные;
+\item[5)]
+имитовставка.
+\end{enumerate}
+
+Заголовок описывает алгоритмы защиты ключей и данных.
+
+Предусмотрены следующие варианты алгоритмов защиты данных
+(см. определения алгоритмов в СТБ 34.101.31):
 \begin{itemize}
-\item[--] 
-JOSE-заголовок (JOSE Header), определяющий параметры и алгоритм шифрования;
-\item[--] 
-защищенные ключи (JWE Encrypted Key), представляющие собой 
-зашифрованные ключи шифрования данных и имитовставки 
-(в некоторых случаях могут представляться пустыми строками);
-\item[--] 
-синхропосылка (JWE Initialization Vector), используемая при шифровании 
-(в некоторых случаях может представляться пустой строкой);
-\item[--]
-зашифрованные данные (JWE Ciphertext);
-\item[--]
-имитовставка (JWE Authentication Tag).
+\item
+\lstinline{"BELT-DWP"}~--- алгоритмы аутентифицированного шифрования 
+\lstinline{belt-dwp}; 
+\item
+\lstinline{"BELT-CHE"}~--- алгоритмы аутентифицированного шифрования 
+\lstinline{belt-che}.
 \end{itemize}
 
-При использовании компактной JWE-сериализации объект JWE условно 
-описывается следующим образом:
-\begin{lstlisting}
-BASE64URL(UTF8(JOSE Header)) || '.' ||
-BASE64URL(JWE Encrypted Key) || '.' ||
-BASE64URL(JWE Initialization Vector) || '.' ||
-BASE64URL(JWE Ciphertext) || '.' ||
-BASE64URL(JWE Authentication Tag)
-\end{lstlisting}
+Выбранный вариант должен быть указан в параметре \lstinline{enc} заголовка.
 
-Для защиты данных должен использоваться набор алгоритмов,
-обозначаемый \lstinline{"BELT-CFB-MAC"}. Этот набор определяет шифрование
-с помощью алгоритма~\lstinline{belt-cfb} и имитозащиту с помощью 
-алгоритма~\lstinline{belt-mac}. Алгоритмы определены в СТБ 34.101.31. 
-Ключи шифрования и имитозащиты вырабатываются случайным или 
-псевдослучайным образом в соответствии с положениями СТБ 34.101.31.
-При шифровании используется нулевая синхропосылка.
-%
-Ключи шифрования и имитозащиты конкатенируются, а затем защищаются 
-с помощью алгоритма \lstinline{bign-keytransport},
-который выполняется с выбранными параметрами подписи.  
-Алгоритм и параметры определены в СТБ 34.101.45.
-%
-Защита ключей производится на открытом ключе получателя. 
-%
-Связка \lstinline{bign-keytransport} с \lstinline{bign-curve256v1}
-обозначается через \lstinline{"BIGNT256"},
-с \lstinline{bign-curve384v1}~--- через \lstinline{"BIGNT384"},
-c \lstinline{bign-curve512v1}~--- через \lstinline{"BIGNT512"}.
-
-Примером JOSE-заголовка объекта JWE является:
-\begin{lstlisting}
- {"alg":"BIGNT256","enc":"BELT-CFB-MAC"}
-\end{lstlisting}
-
-\hiddensection{Различия между объектами JWS и JWE}
-
-%    There are several ways of distinguishing whether an object is a JWS
-%    or JWE.  All these methods will yield the same result for all legal
-%    input values; they may yield different results for malformed inputs.
-
-Существует несколько методов определения принадлежности объекта к JWS или JWE
-(все описанные ниже методы будут показывать одинаковый результат 
-для всех возможных корректных данных,
-однако для некорректных данных результат не определен):
-
-%    o  If the object is using the JWS Compact Serialization or the JWE
-%       Compact Serialization, the number of base64url-encoded segments
-%       separated by period ('.') characters differs for JWSs and JWEs.
-%       JWSs have three segments separated by two period ('.') characters.
-%       JWEs have five segments separated by four period ('.') characters.
-%       
-%       The JOSE Header for a JWS can be distinguished from the JOSE
-%       Header for a JWE by examining the "alg" (algorithm) Header
-%       Parameter value.  If the value represents a digital signature or
-%       MAC algorithm, or is the value "none", it is for a JWS; if it
-%       represents a Key Encryption, Key Wrapping, Direct Key Agreement,
-%       Key Agreement with Key Wrapping, or Direct Encryption algorithm,
-%       it is for a JWE.  (Extracting the "alg" value to examine is
-%       straightforward when using the JWS Compact Serialization or the
-%       JWE Compact Serialization and may be more difficult when using the
-%       JWS JSON Serialization or the JWE JSON Serialization.)
-% 
-%    o  The JOSE Header for a JWS can also be distinguished from the JOSE
-%       Header for a JWE by determining whether an "enc" (encryption
-%       algorithm) member exists.  If the "enc" member exists, it is a
-%       JWE; otherwise, it is a JWS.
-
+Предусмотрены следующие варианты алгоритмов защиты ключей
+(см. определения алгоритмов и параметров в СТБ 34.101.45):
 \begin{itemize}
-\item[--] 
-при использовании компактной сериализации, количество сегментов,
-закодированных согласно base64url и разделенных точкой различно для объектов 
-JWS и JWE:  
-объект JWS состоит из трех фрагментов, разделенных двумя точками, в то время как 
-объект JWE состоит из пяти фрагментов, разделенных четырьмя точками;
-\item[--] 
-определить тип объекта можно анализируя поле \lstinline{alg} в JOSE-заголовке. 
-Если его значение определяет алгоритм ЭЦП, или его значение 
-\lstinline{"none"}, то это объект JWS;
-\item[--] 
-если в JOSE-заголовке есть поле \lstinline{enc} (алгоритм шифрования), 
-то это объект JWE, иначе --- объект JWS.
+\item
+\lstinline{"BIGNT128"}~--- алгоритмы транспорта ключа 
+\lstinline{bign-keytransport} с параметрами \lstinline{bign-curve256v1};
+\item
+\lstinline{"BIGNT192"}~--- алгоритмы транспорта ключа 
+\lstinline{bign-keytransport} с параметрами \lstinline{bign-curve384v1};
+\item
+\lstinline{"BIGNT256"}~--- алгоритмы транспорта ключа 
+\lstinline{bign-keytransport} с параметрами \lstinline{bign-curve512v1}. 
 \end{itemize}
 
-\hiddensection{JOSE-заголовок}
+Выбранный вариант должен быть указан в параметре \lstinline{alg} заголовка. 
 
-JOSE-заголовок (JOSE Header)~--- это объект JSON, параметры которого
-описывают криптографические операции,
-применяемые к набору JWT-утверждений (JWT Claims Set), и, необязательно, 
-дополнительные свойства объекта JWT. 
-
-Перечень стандартных параметров заголовка определен в 
-спецификациях~\cite{RFC7515,RFC7516,RFC7519}.
+В заголовок составного объекта JWЕ (конвертованные подписанные данные) 
+дополнительно должен быть включен параметр \lstinline{cty} со значением 
+\lstinline{"JWT"}. 
 %
-В настоящем стандарте используются только параметры \lstinline{alg} и 
-\lstinline{enc}. 
+Включение этого параметра в обычный объект JWE не рекомендуется.
+
+\begin{example*}
+Заголовки объекта JWE: 
+\lstinline|{"alg":"BIGNT128","enc":"BELT-DWP"}|,
+\lstinline|{"alg":"BIGNT256","enc":"BELT-CHE","cty":"JWT"}|.
+\end{example*}
+
+Ключ защиты данных должен вырабатываться случайным или псевдослучайным образом 
+в соответствии с требованиями СТБ~34.101.31.
 %
-% todo: используются vs применяются?
+Защищенный ключ указывается во второй компоненте объекта JWE.
 
-В зависимости от того, чем объект JWT является (объектом JWS или объектом JWE), 
-применяются те или иные правила формирования JOSE-заголовка.
+Алгоритм аутентифицированного шифрования, который используется для установки 
+защиты данных, принимает на вход критические данные, ассоциированные открытые 
+данные, ключ защиты данных и синхропосылку. Алгоритм возвращает зашифрованные 
+данные и имитовставку.
+%
+Синхропосылка указывается в третьей компоненте объекта JWE, зашифрованные 
+данные~--- в четвертой, имитоставка~--- в пятой.
 
-Если JOSE-заголовок используется для объекта JWS, то объект JWT представляется в
-виде объекта JWS и утверждения подписываются, т.е. JWT-утверждения являются
-исходными данными для объекта JWS (исходные данные подписываются совместно с
-заголовком).
+Cинхропосылка выбирается произвольным образом.
+%
+Нулевая синхропосылка считается синхропосылкой по умолчанию, она может 
+кодироваться пустой строкой.
 
-Если JOSE-заголовок используется для объекта JWE, то объект JWT представляется в
-виде объекта JWE и утверждения зашифровываются, т.е. JWT-утверждения являются
-исходными данными, защищаемыми на уровне объекта JWE.
-
-Объект JWT может включаться в другую JWE или JWS структуру, создавая, таким
-образом, вложенный объект JWT.
+Критическими данными является либо кодовое представление объекта JSON с 
+утверждениями, либо вложенный объект JWS. 
+%
+В качестве ассоциированных открытых данных должно выступать кодовое 
+представление заголовка объекта JWE.
 
 \end{appendix}

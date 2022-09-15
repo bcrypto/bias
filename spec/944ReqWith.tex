@@ -137,29 +137,28 @@ scope=openid profile email phone
 Например, запросить второй и первый уровни гарантии аутентификации,
 отдавая приоритет второму, можно следующим образом:
 \begin{lstlisting}
-"acr": {"essential": true,
-        "values": ["2", "1"]}
+"acr": {"essential": true, "values": ["2", "1"]}
 \end{lstlisting}
 
 В \lstinline{values} должны указываться корректные значения утверждения.
 
 Пример запроса утверждений через \lstinline{claims}:
 \begin{lstlisting}
- {
+{
   "userinfo":
   {
-   "given_name": {"essential": true},
-   "nickname": null,
-   "email": {"essential": true},
-   "email_verified": {"essential": true},
-   "picture": null
- },
+    "given_name": {"essential": true},
+    "nickname": null,
+    "email": {"essential": true},
+    "email_verified": {"essential": true},
+    "picture": null
+  },
   "id_token":
   {
-   "auth_time": {"essential": true},
-   "acr": {"values": ["2", "1"] }
-  }
- }
+    "auth_time": {"essential": true},
+    "acr": {"values": ["2", "1"]}
+   }
+}
 \end{lstlisting}
 
 \subsection{Запрос утверждения \lstinline{acr}}\label{CLAIMS.ReqAcr}
@@ -169,7 +168,7 @@ scope=openid profile email phone
 качестве допустимых значений \lstinline{acr}. 
 
 Если утверждение \lstinline{acr} запрашивается как существенное,
-то СИ должен поддержать предложение СИ. 
+то СИ должна поддержать предложение ПС. 
 %
 Для этого СИ может провести повторную аутентификацию пользователя. 
 %
